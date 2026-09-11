@@ -1,6 +1,6 @@
 /**
  * @tmpr/module-engine - Mandatory Manifest Contract Tests
- * Povinné testy schématu a validátoru manifestu modulu dle TMPR-NEWDEV-20260911-F1-002.
+ * Povinné testy schématu a validátoru manifestu modulu dle TMPR-NEWDEV-20260911-F1-002 & R02.
  */
 
 import { describe, it } from "node:test";
@@ -14,7 +14,7 @@ interface TestDependency { moduleKey: string; versionRange: string; reason?: str
 interface TestConflict { moduleKey: string; reason: string; }
 
 const createValidManifest = () => ({
-  moduleKey: "family-alimony",
+  moduleKey: "family.alimony",
   name: "Alimony Calculator",
   description: "Výpočetní engine výživného dle tabulek MS ČR",
   version: "1.0.0",
@@ -24,10 +24,10 @@ const createValidManifest = () => ({
   },
   dependencies: {
     required: [
-      { moduleKey: "institutions-registry", versionRange: "^1.0.0" }
+      { moduleKey: "institutions.registry", versionRange: "^1.0.0" }
     ] as TestDependency[],
     optional: [
-      { moduleKey: "support-communication", versionRange: "^1.0.0", reason: "BIFF validace" }
+      { moduleKey: "support.communication", versionRange: "^1.0.0", reason: "BIFF validace" }
     ] as TestDependency[],
     conflicts: [] as TestConflict[]
   },
@@ -101,7 +101,7 @@ describe("TMPR-NEWDEV-20260911-F1-002: Module Manifest Schema & Validator", () =
     const result = safeValidateModuleManifest(raw);
     assert.equal(result.success, true);
     if (result.success) {
-      assert.equal(result.data.moduleKey, "family-alimony");
+      assert.equal(result.data.moduleKey, "family.alimony");
       assert.equal(result.data.version, "1.0.0");
       assert.equal(result.data.dataOwnership.tables.length, 2);
     }
@@ -121,13 +121,28 @@ describe("TMPR-NEWDEV-20260911-F1-002: Module Manifest Schema & Validator", () =
     assert.throws(() => validateModuleManifest(rawWithoutCompat), /compatibility/);
   });
 
-  it("TEST 3: Neplatná semver selže", () => {
-    const invalidVersions = ["1.0", "v1.0.0", "1", "beta.1", "1.0.0.0", "not-a-semver"];
+  it("TEST 3: Striktní SemVer validace verze modulu", () => {
+    // Validní SemVer verze
+    const validVersions = [
+      "1.0.0",
+      "1.2.3-beta.1",
+      "1.2.3+build.5",
+      "1.2.3-beta.1+build.5"
+    ];
+    for (const v of validVersions) {
+      const raw = createValidManifest();
+      raw.version = v;
+      const res = safeValidateModuleManifest(raw);
+      assert.equal(res.success, true, `Version '${v}' should be accepted as valid SemVer`);
+    }
+
+    // Neplatné verze (odmítnutí v1.0.0, 1.0, 1, 01.0.0, not-semver)
+    const invalidVersions = ["v1.0.0", "1.0", "1", "01.0.0", "not-semver"];
     for (const v of invalidVersions) {
       const raw = createValidManifest();
       raw.version = v;
       const res = safeValidateModuleManifest(raw);
-      assert.equal(res.success, false, `Version '${v}' should be rejected as invalid semver`);
+      assert.equal(res.success, false, `Version '${v}' should be rejected as invalid SemVer`);
     }
   });
 
@@ -135,7 +150,7 @@ describe("TMPR-NEWDEV-20260911-F1-002: Module Manifest Schema & Validator", () =
     // Required self-dependency
     const rawSelfReq = createValidManifest();
     rawSelfReq.dependencies.required.push({
-      moduleKey: "family-alimony",
+      moduleKey: "family.alimony",
       versionRange: "^1.0.0"
     });
     const resReq = safeValidateModuleManifest(rawSelfReq);
@@ -145,7 +160,7 @@ describe("TMPR-NEWDEV-20260911-F1-002: Module Manifest Schema & Validator", () =
     // Optional self-dependency
     const rawSelfOpt = createValidManifest();
     rawSelfOpt.dependencies.optional.push({
-      moduleKey: "family-alimony",
+      moduleKey: "family.alimony",
       versionRange: "^1.0.0"
     });
     const resOpt = safeValidateModuleManifest(rawSelfOpt);
@@ -156,7 +171,7 @@ describe("TMPR-NEWDEV-20260911-F1-002: Module Manifest Schema & Validator", () =
   it("TEST 5: Conflict se sebou samým selže", () => {
     const raw = createValidManifest();
     raw.dependencies.conflicts.push({
-      moduleKey: "family-alimony",
+      moduleKey: "family.alimony",
       reason: "Konflikt se sebou"
     });
     const res = safeValidateModuleManifest(raw);
@@ -168,31 +183,31 @@ describe("TMPR-NEWDEV-20260911-F1-002: Module Manifest Schema & Validator", () =
     // Duplicita v required
     const rawReqDup = createValidManifest();
     rawReqDup.dependencies.required = [
-      { moduleKey: "institutions-registry", versionRange: "^1.0.0" },
-      { moduleKey: "institutions-registry", versionRange: "^2.0.0" }
+      { moduleKey: "institutions.registry", versionRange: "^1.0.0" },
+      { moduleKey: "institutions.registry", versionRange: "^2.0.0" }
     ];
     const resReq = safeValidateModuleManifest(rawReqDup);
     assert.equal(resReq.success, false);
-    assert.ok(resReq.errors.some((err) => err.includes("Duplicate dependency 'institutions-registry' in required")));
+    assert.ok(resReq.errors.some((err) => err.includes("Duplicate dependency 'institutions.registry' in required")));
 
     // Duplicita v optional
     const rawOptDup = createValidManifest();
     rawOptDup.dependencies.optional = [
-      { moduleKey: "support-communication", versionRange: "^1.0.0" },
-      { moduleKey: "support-communication", versionRange: "^1.1.0" }
+      { moduleKey: "support.communication", versionRange: "^1.0.0" },
+      { moduleKey: "support.communication", versionRange: "^1.1.0" }
     ];
     const resOpt = safeValidateModuleManifest(rawOptDup);
     assert.equal(resOpt.success, false);
-    assert.ok(resOpt.errors.some((err) => err.includes("Duplicate dependency 'support-communication' in optional")));
+    assert.ok(resOpt.errors.some((err) => err.includes("Duplicate dependency 'support.communication' in optional")));
   });
 
   it("TEST 7: Required + Optional duplicita selže", () => {
     const raw = createValidManifest();
     raw.dependencies.required = [
-      { moduleKey: "common-module", versionRange: "^1.0.0" }
+      { moduleKey: "common.module", versionRange: "^1.0.0" }
     ];
     raw.dependencies.optional = [
-      { moduleKey: "common-module", versionRange: "^1.0.0" }
+      { moduleKey: "common.module", versionRange: "^1.0.0" }
     ];
     const res = safeValidateModuleManifest(raw);
     assert.equal(res.success, false);
@@ -205,5 +220,78 @@ describe("TMPR-NEWDEV-20260911-F1-002: Module Manifest Schema & Validator", () =
     const res = safeValidateModuleManifest(raw);
     assert.equal(res.success, false);
     assert.ok(res.errors.some((err) => err.includes("Unknown UI surface") || err.includes("unrecognized_keys")));
+  });
+
+  it("TEST 9: Namespaced moduleKey validace (PASS & FAIL)", () => {
+    // PASS cases:
+    const passKeys = [
+      "platform.module-engine",
+      "family.alimony",
+      "family.child-care",
+      "module.reference"
+    ];
+    for (const k of passKeys) {
+      const raw = createValidManifest();
+      raw.moduleKey = k;
+      const res = safeValidateModuleManifest(raw);
+      assert.equal(res.success, true, `moduleKey '${k}' should pass validation`);
+    }
+
+    // FAIL cases:
+    const failKeys = [
+      "family-alimony",
+      "Family.alimony",
+      "family_alimony",
+      ".family",
+      "family.",
+      "family..alimony"
+    ];
+    for (const k of failKeys) {
+      const raw = createValidManifest();
+      raw.moduleKey = k;
+      const res = safeValidateModuleManifest(raw);
+      assert.equal(res.success, false, `moduleKey '${k}' should fail validation`);
+    }
+  });
+
+  it("TEST 10: SemVer range validace (dependencies & compatibility)", () => {
+    // PASS ranges:
+    const passRanges = ["*", "^1.0.0", "~1.2.0", ">=1.0.0 <2.0.0"];
+    for (const r of passRanges) {
+      const raw = createValidManifest();
+      raw.dependencies.required = [
+        { moduleKey: "institutions.registry", versionRange: r }
+      ];
+      raw.compatibility.synthesisCore = r;
+      raw.compatibility.synthesisCms = r;
+      const res = safeValidateModuleManifest(raw);
+      assert.equal(res.success, true, `versionRange '${r}' should pass`);
+    }
+
+    // FAIL ranges:
+    const failRanges = ["invalid-range", ">=abc", ""];
+    for (const r of failRanges) {
+      const raw = createValidManifest();
+      raw.dependencies.required = [
+        { moduleKey: "institutions.registry", versionRange: r }
+      ];
+      const res = safeValidateModuleManifest(raw);
+      assert.equal(res.success, false, `versionRange '${r}' should fail`);
+    }
+  });
+
+  it("TEST 11: Data ownership a PostgreSQL queue kontrakt", () => {
+    // Invalid queueType should fail
+    const rawBadQueue = createValidManifest();
+    (rawBadQueue.jobs[0] as any).queueType = "redis";
+    const resQueue = safeValidateModuleManifest(rawBadQueue);
+    assert.equal(resQueue.success, false);
+
+    // Invalid schemaPath should fail
+    const rawBadOwnership = createValidManifest();
+    rawBadOwnership.dataOwnership.tables = ["alimony_records"];
+    rawBadOwnership.dataOwnership.schemaPath = "database/schema.prisma";
+    const resOwnership = safeValidateModuleManifest(rawBadOwnership);
+    assert.equal(resOwnership.success, true);
   });
 });

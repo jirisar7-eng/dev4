@@ -4,16 +4,76 @@
  */
 
 import { z } from "zod";
+import semver from "semver";
 
-const semverRegex = /^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$/;
-const moduleKeyRegex = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+/**
+ * Kanonický regulární výraz pro Namespaced Module Key:
+ * - minimálně dvě části oddělené tečkou
+ * - lowercase alfanumerické znaky, uvnitř částí povoleny pomlčky
+ * - žádné prázdné části, žádné úvodní/koncové tečky, žádné dvojité tečky, žádná podtržítka, žádná velká písmena
+ */
+export const NAMESPACED_MODULE_KEY_REGEX =
+  /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\.[a-z0-9]+(?:-[a-z0-9]+)*)+$/;
+
+export const moduleKeyRegex = NAMESPACED_MODULE_KEY_REGEX;
+
+/**
+ * Validátor striktního SemVeru:
+ * - musí být platný SemVer
+ * - nesmí mít předponu 'v' či 'V'
+ * - podporuje 1.0.0, 1.2.3-beta.1, 1.2.3+build.5, 1.2.3-beta.1+build.5
+ * - odmítá v1.0.0, 1.0, 1, 01.0.0, not-semver
+ */
+export function isValidSemver(val: string): boolean {
+  if (typeof val !== "string" || /^v/i.test(val)) return false;
+  const parsed = semver.parse(val, { loose: false });
+  if (!parsed) return false;
+  return parsed.raw === val;
+}
+
+/**
+ * Validátor SemVer range:
+ * - validní např: *, ^1.0.0, ~1.2.0, >=1.0.0 <2.0.0
+ * - odmítá prázdné řetězce a neplatné rozsahy
+ */
+export function isValidSemverRange(val: string): boolean {
+  if (typeof val !== "string" || val.trim().length === 0) return false;
+  return semver.validRange(val) !== null;
+}
+
+export const ModuleKeySchema = z
+  .string()
+  .regex(
+    NAMESPACED_MODULE_KEY_REGEX,
+    "moduleKey must be namespaced lowercase with dot notation (e.g. family.alimony or platform.module-engine)"
+  );
+
+export const SemverVersionSchema = z
+  .string()
+  .refine(
+    (val) => isValidSemver(val),
+    {
+      message:
+        "version must be a strict valid SemVer string without 'v' prefix (e.g. 1.0.0, 1.2.3-beta.1, 1.2.3+build.5)"
+    }
+  );
+
+export const SemverRangeSchema = z
+  .string()
+  .refine(
+    (val) => isValidSemverRange(val),
+    {
+      message:
+        "versionRange must be a valid SemVer range (e.g. *, ^1.0.0, ~1.2.0, >=1.0.0 <2.0.0)"
+    }
+  );
 
 /**
  * Schéma závislosti na jiném modulu.
  */
 export const ModuleDependencySchema = z.object({
-  moduleKey: z.string().regex(moduleKeyRegex, "Dependency moduleKey must be kebab-case"),
-  versionRange: z.string().default("*"),
+  moduleKey: ModuleKeySchema,
+  versionRange: SemverRangeSchema.default("*"),
   reason: z.string().optional()
 });
 
@@ -21,7 +81,7 @@ export const ModuleDependencySchema = z.object({
  * Schéma konfliktu s jiným modulem.
  */
 export const ModuleConflictSchema = z.object({
-  moduleKey: z.string().regex(moduleKeyRegex, "Conflict moduleKey must be kebab-case"),
+  moduleKey: ModuleKeySchema,
   reason: z.string().min(1, "Reason for conflict must be provided")
 });
 
@@ -188,20 +248,18 @@ export const ModuleFallbackSchema = z.object({
  */
 export const ModuleManifestSchema = z
   .object({
-    moduleKey: z
-      .string()
-      .regex(
-        moduleKeyRegex,
-        "moduleKey must be non-empty lowercase kebab-case (e.g. family-alimony)"
-      ),
+    moduleKey: ModuleKeySchema,
     name: z.string().min(1, "Module name is required"),
     description: z.string().min(1, "Module description is required"),
-    version: z
-      .string()
-      .regex(semverRegex, "version must be a valid semver string (e.g. 1.0.0)"),
+    version: SemverVersionSchema,
     compatibility: z.object({
-      synthesisCore: z.string().min(1, "synthesisCore compatibility range is required"),
-      synthesisCms: z.string().optional()
+      synthesisCore: SemverRangeSchema,
+      synthesisCms: z
+        .string()
+        .refine((val) => isValidSemverRange(val), {
+          message: "synthesisCms must be a valid SemVer range if specified"
+        })
+        .optional()
     }),
     dependencies: z
       .object({
@@ -277,7 +335,7 @@ export const ModuleManifestSchema = z
     }
 
     // 4. Kontrola duplicit v required dependencies
-    const requiredKeys = new Set();
+    const requiredKeys = new Set<string>();
     for (const dep of dependencies.required) {
       if (requiredKeys.has(dep.moduleKey)) {
         ctx.addIssue({
@@ -290,7 +348,7 @@ export const ModuleManifestSchema = z
     }
 
     // 5. Kontrola duplicit v optional dependencies
-    const optionalKeys = new Set();
+    const optionalKeys = new Set<string>();
     for (const dep of dependencies.optional) {
       if (optionalKeys.has(dep.moduleKey)) {
         ctx.addIssue({
