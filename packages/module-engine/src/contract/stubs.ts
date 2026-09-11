@@ -1,29 +1,17 @@
 /**
  * @tmpr/module-engine - Architectural Stubs for Future Tasks
  * Typová rozhraní a stubs pro budoucí části Module Engine:
- * - Module Registry
- * - Dependency Resolver & Cycle Detection
- * - Lifecycle Engine
- * - Module Gates
- *
- * POZNÁMKA: Tyto části nejsou v F1-002 implementovány jako hotové,
- * jsou připraveny pro navazující úkoly F1-003+.
+ * - Module Registry (F1-003)
+ * - Dependency Resolver & Cycle Detection (navazující samostatný task)
+ * - Lifecycle Engine (navazující samostatný task)
+ * - Module Gates (pozdější task)
  */
 
-import type { IModule, IModuleManifest } from "./types.js";
+import type { IModuleManifest } from "./types.js";
+export type { IModuleRegistry } from "../registry/registry.types.js";
 
 /**
- * STUB: Budoucí rozhraní pro registr modulů (bude implementováno v F1-003).
- */
-export interface IModuleRegistry {
-  register(module: IModule): void;
-  get(moduleKey: string): IModule | undefined;
-  list(): readonly IModule[];
-  has(moduleKey: string): boolean;
-}
-
-/**
- * STUB: Budoucí rozhraní pro Dependency Resolver a detekci cyklů (F1-003).
+ * STUB: Budoucí rozhraní pro Dependency Resolver a detekci cyklů (navazující samostatný task).
  */
 export interface IDependencyResolver {
   resolveOrder(manifests: readonly IModuleManifest[]): {
@@ -35,7 +23,7 @@ export interface IDependencyResolver {
 }
 
 /**
- * STUB: Budoucí rozhraní pro Module Gates (Next.js middleware / NestJS guards) (F1-004).
+ * STUB: Budoucí rozhraní pro Module Gates (Next.js middleware / NestJS guards) (pozdější task).
  */
 export interface IModuleGate {
   isModuleEnabled(moduleKey: string): Promise<boolean>;

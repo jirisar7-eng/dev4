@@ -13,12 +13,16 @@
     "./contract": {
       "types": "./dist/contract/index.d.ts",
       "import": "./dist/contract/index.js"
+    },
+    "./registry": {
+      "types": "./dist/registry/index.d.ts",
+      "import": "./dist/registry/index.js"
     }
   },
   "scripts": {
     "build": "tsc",
     "build:test": "tsc -p tsconfig.test.json",
-    "test": "tsc -p tsconfig.test.json && node --test dist-test/tests/manifest.test.js",
+    "test": "tsc -p tsconfig.test.json && node --test dist-test/tests/manifest.test.js dist-test/tests/registry.test.js",
     "typecheck": "tsc --noEmit",
     "lint": "echo \"@tmpr/module-engine: lint ok\""
   },
