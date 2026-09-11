@@ -412,3 +412,131 @@ describe("TMPR-NEWDEV-20260911-F1-003: Module Registry", () => {
     assert.equal(registry.has("test.dependent-module"), true);
   });
 });
+
+describe("TMPR-NEWDEV-20260911-F1-003-R01: Read-only State Hardening", () => {
+  // 1. getRecord() vrací správný state
+  it("1. getRecord() vrací správný state", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({ moduleKey: "test.hardening-get" });
+    registry.register(mod);
+
+    const record = registry.getRecord("test.hardening-get");
+    assert.ok(record);
+    assert.equal(record.state, "uninstalled");
+  });
+
+  // 2. pokus změnit state vráceného getRecord snapshotu nezmění interní state
+  it("2. pokus změnit state vráceného getRecord snapshotu nezmění interní state", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({ moduleKey: "test.hardening-mutation" });
+    registry.register(mod);
+
+    const record = registry.getRecord("test.hardening-mutation");
+    assert.ok(record);
+    assert.equal(record.state, "uninstalled");
+
+    // Pokus o přímou mutaci snapshotu
+    try {
+      (record as unknown as { state: string }).state = "enabled";
+    } catch {
+      // V striktním režimu Object.freeze vyvolá TypeError
+    }
+
+    // Interní stav registru MUSÍ zůstat nezměněn (uninstalled)
+    const freshRecord = registry.getRecord("test.hardening-mutation");
+    assert.ok(freshRecord);
+    assert.equal(freshRecord.state, "uninstalled");
+  });
+
+  // 3. listRecords() neumožní změnit interní state mutací vráceného recordu
+  it("3. listRecords() neumožní změnit interní state mutací vráceného recordu", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({ moduleKey: "test.hardening-list" });
+    registry.register(mod);
+
+    const records = registry.listRecords();
+    assert.equal(records.length, 1);
+    assert.equal(records[0]?.state, "uninstalled");
+
+    // Pokus o mutaci prvku z listRecords
+    try {
+      (records[0] as unknown as { state: string }).state = "enabled";
+    } catch {
+      // V striktním režimu Object.freeze vyvolá TypeError
+    }
+
+    // Pokus o mutaci pole samotného (Object.freeze)
+    assert.throws(() => {
+      (records as unknown as Array<unknown>).push({} as any);
+    }, TypeError);
+
+    // Interní stav registru MUSÍ zůstat nezměněn
+    assert.equal(registry.getRecord("test.hardening-list")?.state, "uninstalled");
+  });
+
+  // 4. recordState() stále správně změní interní state
+  it("4. recordState() stále správně změní interní state", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({ moduleKey: "test.hardening-record-state" });
+    registry.register(mod);
+
+    assert.doesNotThrow(() => {
+      registry.recordState("test.hardening-record-state", "installed");
+    });
+  });
+
+  // 5. po recordState() nový getRecord() vrátí nový aktuální state
+  it("5. po recordState() nový getRecord() vrátí nový aktuální state", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({ moduleKey: "test.hardening-lifecycle" });
+    registry.register(mod);
+
+    assert.equal(registry.getRecord("test.hardening-lifecycle")?.state, "uninstalled");
+
+    registry.recordState("test.hardening-lifecycle", "installed");
+    assert.equal(registry.getRecord("test.hardening-lifecycle")?.state, "installed");
+
+    registry.recordState("test.hardening-lifecycle", "enabled");
+    assert.equal(registry.getRecord("test.hardening-lifecycle")?.state, "enabled");
+
+    registry.recordState("test.hardening-lifecycle", "disabled");
+    assert.equal(registry.getRecord("test.hardening-lifecycle")?.state, "disabled");
+
+    registry.recordState("test.hardening-lifecycle", "failed");
+    assert.equal(registry.getRecord("test.hardening-lifecycle")?.state, "failed");
+  });
+
+  // 6. registry API nadále funguje: register/get/list/has/getRouteOwner
+  it("6. registry API nadále funguje: register/get/list/has/getRouteOwner", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const modA = createTestModule({
+      moduleKey: "test.module-a",
+      routes: [{ path: "/a", surface: "public", requiresAuth: false }]
+    });
+    const modB = createTestModule({
+      moduleKey: "test.module-b",
+      routes: [{ path: "/b", surface: "admin", requiresAuth: true }]
+    });
+
+    registry.register(modA);
+    registry.register(modB);
+
+    assert.equal(registry.has("test.module-a"), true);
+    assert.equal(registry.has("test.module-b"), true);
+    assert.equal(registry.has("test.module-c"), false);
+
+    assert.equal(registry.get("test.module-a"), modA);
+    assert.equal(registry.get("test.module-b"), modB);
+    assert.equal(registry.get("test.module-c"), undefined);
+
+    const list = registry.list();
+    assert.equal(list.length, 2);
+    assert.ok(list.includes(modA));
+    assert.ok(list.includes(modB));
+
+    assert.equal(registry.getRouteOwner("public", "/a"), "test.module-a");
+    assert.equal(registry.getRouteOwner("admin", "/b"), "test.module-b");
+    assert.equal(registry.getRouteOwner("public", "/b"), undefined);
+  });
+});
+

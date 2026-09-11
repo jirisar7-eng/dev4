@@ -22,7 +22,9 @@ export interface ModuleRegistryOptions {
 }
 
 /**
- * Autoritativní záznam registrovaného modulu v Module Registry.
+ * Autoritativní veřejný read-only záznam registrovaného modulu v Module Registry.
+ * Všechny vlastnosti včetně state jsou read-only snapshotem.
+ * Změny stavu lze provádět výhradně přes autoritativní API recordState().
  */
 export interface IModuleRegistryRecord {
   /**
@@ -37,9 +39,9 @@ export interface IModuleRegistryRecord {
 
   /**
    * Aktuální stav životního cyklu modulu.
-   * Po registraci je vždy "uninstalled".
+   * Read-only pohled. Změny stavu lze provádět výhradně přes autoritativní API recordState().
    */
-  state: ModuleLifecycleState;
+  readonly state: ModuleLifecycleState;
 
   /**
    * Validovaný a typovaný manifest modulu.
@@ -83,12 +85,14 @@ export interface IModuleRegistry {
   has(moduleKey: string): boolean;
 
   /**
-   * Vrátí detailní záznam modulu (IModuleRegistryRecord) dle moduleKey nebo undefined.
+   * Vrátí bezpečný read-only snapshot záznamu modulu (IModuleRegistryRecord) dle moduleKey nebo undefined.
+   * Změna vráceného snapshotu neovlivní interní stav registru.
    */
   getRecord(moduleKey: string): IModuleRegistryRecord | undefined;
 
   /**
-   * Vrátí seznam všech detailních záznamů registrovaných modulů.
+   * Vrátí seznam bezpečných read-only snapshotů všech registrovaných modulů.
+   * Změna prvků pole neovlivní interní stav registru.
    */
   listRecords(): readonly IModuleRegistryRecord[];
 
@@ -99,6 +103,7 @@ export interface IModuleRegistry {
 
   /**
    * Zaznamená aktualizaci stavu životního cyklu modulu (bez spouštění hooků).
+   * Jediná autoritativní cesta pro změnu stavu v registru.
    */
   recordState(moduleKey: string, state: ModuleLifecycleState): void;
 }

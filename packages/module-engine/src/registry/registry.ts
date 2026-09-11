@@ -8,12 +8,13 @@
  * - deterministický
  * - in-memory stav (žádný přímý zápis do DB v této fázi)
  * - nezávislý na Dependency Resolveru (moduly se mohou registrovat i bez přítomnosti závislostí)
+ * - striktní zapouzdření stavu (veřejné API vrací neměnné snapshoty, interní mutable record je izolován)
  */
 
 import semver from "semver";
 import { safeValidateModuleManifest } from "../contract/validator.js";
 import { isValidSemver } from "../contract/manifest.schema.js";
-import type { IModule, ModuleLifecycleState } from "../contract/types.js";
+import type { IModule, IModuleManifest, ModuleLifecycleState } from "../contract/types.js";
 import type {
   IModuleRegistry,
   IModuleRegistryRecord,
@@ -21,9 +22,22 @@ import type {
 } from "./registry.types.js";
 import { ModuleRegistryError } from "./registry.errors.js";
 
+/**
+ * Interní mutable záznam držený ModuleRegistry.
+ * Není exportován do veřejného API balíčku a externí kód k němu nemá přístup.
+ */
+interface InternalModuleRegistryRecord {
+  readonly moduleKey: string;
+  readonly version: string;
+  state: ModuleLifecycleState;
+  readonly manifest: IModuleManifest;
+  readonly module: IModule;
+  readonly registeredAt: string;
+}
+
 export class ModuleRegistry implements IModuleRegistry {
   private readonly options: ModuleRegistryOptions;
-  private readonly records = new Map<string, IModuleRegistryRecord>();
+  private readonly records = new Map<string, InternalModuleRegistryRecord>();
   private readonly routeIndex = new Map<string, string>(); // `${surface}:${path}` -> moduleKey
 
   constructor(options: ModuleRegistryOptions) {
@@ -81,7 +95,7 @@ export class ModuleRegistry implements IModuleRegistry {
       );
     }
 
-    const manifest = validation.data;
+    const manifest = Object.freeze({ ...validation.data });
     const { moduleKey } = manifest;
 
     // 2. Kontrola duplicity moduleKey
@@ -141,7 +155,6 @@ export class ModuleRegistry implements IModuleRegistry {
 
     for (const route of manifest.routes) {
       const routeKey = `${route.surface}:${route.path}`;
-
       if (this.routeIndex.has(routeKey)) {
         const existingOwner = this.routeIndex.get(routeKey);
         throw new ModuleRegistryError(
@@ -182,7 +195,7 @@ export class ModuleRegistry implements IModuleRegistry {
       this.routeIndex.set(r.key, moduleKey);
     }
 
-    const record: IModuleRegistryRecord = {
+    const record: InternalModuleRegistryRecord = {
       moduleKey,
       version: manifest.version,
       state: "uninstalled",
@@ -195,6 +208,20 @@ export class ModuleRegistry implements IModuleRegistry {
   }
 
   /**
+   * Převede interní mutable záznam na bezpečný, zmrazený read-only snapshot.
+   */
+  private toPublicRecord(internal: InternalModuleRegistryRecord): IModuleRegistryRecord {
+    return Object.freeze({
+      moduleKey: internal.moduleKey,
+      version: internal.version,
+      state: internal.state,
+      manifest: internal.manifest,
+      module: internal.module,
+      registeredAt: internal.registeredAt
+    });
+  }
+
+  /**
    * Vrátí modul dle jeho moduleKey nebo undefined.
    */
   public get(moduleKey: string): IModule | undefined {
@@ -202,10 +229,10 @@ export class ModuleRegistry implements IModuleRegistry {
   }
 
   /**
-   * Vrátí seznam všech registrovaných modulů.
+   * Vrátí seznam všech registrovaných modulů jako neměnnou kolekci.
    */
   public list(): readonly IModule[] {
-    return Array.from(this.records.values()).map((r) => r.module);
+    return Object.freeze(Array.from(this.records.values()).map((r) => r.module));
   }
 
   /**
@@ -216,17 +243,25 @@ export class ModuleRegistry implements IModuleRegistry {
   }
 
   /**
-   * Vrátí autoritativní záznam registru pro daný modul.
+   * Vrátí bezpečný read-only snapshot autoritativního záznamu registru pro daný modul.
+   * Nevrací referenci na interní mutable záznam.
    */
   public getRecord(moduleKey: string): IModuleRegistryRecord | undefined {
-    return this.records.get(moduleKey);
+    const internal = this.records.get(moduleKey);
+    if (!internal) {
+      return undefined;
+    }
+    return this.toPublicRecord(internal);
   }
 
   /**
-   * Vrátí seznam všech autoritativních záznamů registru.
+   * Vrátí seznam bezpečných read-only snapshotů všech autoritativních záznamů registru.
+   * Pole je zmrazeno a položky jsou oddělené snapshoty.
    */
   public listRecords(): readonly IModuleRegistryRecord[] {
-    return Array.from(this.records.values());
+    return Object.freeze(
+      Array.from(this.records.values()).map((r) => this.toPublicRecord(r))
+    );
   }
 
   /**
@@ -239,6 +274,7 @@ export class ModuleRegistry implements IModuleRegistry {
 
   /**
    * Zaznamená aktualizaci stavu životního cyklu modulu.
+   * Jediná autoritativní cesta pro změnu stavu v registru.
    * NESPOUŠTÍ žádné hooky (onInstall, onEnable apod.).
    */
   public recordState(moduleKey: string, state: ModuleLifecycleState): void {
@@ -250,7 +286,6 @@ export class ModuleRegistry implements IModuleRegistry {
         { moduleKey }
       );
     }
-
     record.state = state;
   }
 }
