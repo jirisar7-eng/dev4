@@ -17,12 +17,16 @@
     "./registry": {
       "types": "./dist/registry/index.d.ts",
       "import": "./dist/registry/index.js"
+    },
+    "./dependencies": {
+      "types": "./dist/dependencies/index.d.ts",
+      "import": "./dist/dependencies/index.js"
     }
   },
   "scripts": {
     "build": "tsc",
     "build:test": "tsc -p tsconfig.test.json",
-    "test": "tsc -p tsconfig.test.json && node --test dist-test/tests/manifest.test.js dist-test/tests/registry.test.js",
+    "test": "tsc -p tsconfig.test.json && node --test dist-test/tests/manifest.test.js dist-test/tests/registry.test.js dist-test/tests/dependency-resolver.test.js",
     "typecheck": "tsc --noEmit",
     "lint": "echo \"@tmpr/module-engine: lint ok\""
   },
