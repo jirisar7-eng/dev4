@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import {
   ModuleRegistry,
   ModuleRegistryError,
+  deepFreeze,
   type IModule,
   type IModuleManifest
 } from "../src/index.js";
@@ -540,3 +541,419 @@ describe("TMPR-NEWDEV-20260911-F1-003-R01: Read-only State Hardening", () => {
   });
 });
 
+// ============================================================================
+// TMPR-NEWDEV-20260911-F1-003-R02: Deep Manifest Immutability Hardening
+// ============================================================================
+
+describe("TMPR-NEWDEV-20260911-F1-003-R02: Deep Manifest Immutability Hardening", () => {
+  // 1. Object.isFrozen(record.manifest) === true
+  it("1. Object.isFrozen(record.manifest) === true", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({ moduleKey: "test.freeze-root" });
+    registry.register(mod);
+
+    const record = registry.getRecord("test.freeze-root");
+    assert.ok(record);
+    assert.equal(Object.isFrozen(record.manifest), true);
+  });
+
+  // 2. Object.isFrozen(record.manifest.routes) === true
+  it("2. Object.isFrozen(record.manifest.routes) === true", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({
+      moduleKey: "test.freeze-routes",
+      routes: [{ path: "/login", surface: "public", requiresAuth: false }]
+    });
+    registry.register(mod);
+
+    const record = registry.getRecord("test.freeze-routes");
+    assert.ok(record);
+    assert.equal(Object.isFrozen(record.manifest.routes), true);
+    assert.equal(Object.isFrozen(record.manifest.routes[0]), true);
+  });
+
+  // 3. Object.isFrozen(record.manifest.dependencies) === true
+  it("3. Object.isFrozen(record.manifest.dependencies) === true", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({ moduleKey: "test.freeze-deps" });
+    registry.register(mod);
+
+    const record = registry.getRecord("test.freeze-deps");
+    assert.ok(record);
+    assert.equal(Object.isFrozen(record.manifest.dependencies), true);
+  });
+
+  // 4. Object.isFrozen(record.manifest.dependencies.required) === true
+  it("4. Object.isFrozen(record.manifest.dependencies.required) === true", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({
+      moduleKey: "test.freeze-deps-required",
+      dependencies: {
+        required: [{ moduleKey: "platform.auth", versionRange: "^1.0.0" }],
+        optional: [],
+        conflicts: []
+      }
+    });
+    registry.register(mod);
+
+    const record = registry.getRecord("test.freeze-deps-required");
+    assert.ok(record);
+    assert.equal(Object.isFrozen(record.manifest.dependencies.required), true);
+    assert.equal(Object.isFrozen(record.manifest.dependencies.optional), true);
+    assert.equal(Object.isFrozen(record.manifest.dependencies.conflicts), true);
+    assert.equal(Object.isFrozen(record.manifest.dependencies.required[0]), true);
+  });
+
+  // 5. pokus (record.manifest.routes as any[]).push(...) selže / nezmění Registry manifest
+  it("5. pokus (record.manifest.routes as any[]).push(...) selže / nezmění Registry manifest", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({
+      moduleKey: "test.routes-mutation-attempt",
+      routes: [{ path: "/init", surface: "public", requiresAuth: false }]
+    });
+    registry.register(mod);
+
+    const record = registry.getRecord("test.routes-mutation-attempt");
+    assert.ok(record);
+
+    assert.throws(() => {
+      (record.manifest.routes as unknown as Array<unknown>).push({
+        path: "/injected",
+        surface: "public",
+        requiresAuth: false
+      });
+    }, TypeError);
+
+    // Počet a obsah rout musí zůstat přesně podle registrace
+    assert.equal(record.manifest.routes.length, 1);
+    assert.equal(record.manifest.routes[0]!.path, "/init");
+
+    // Nový snapshot z registru musí mít rovněž původní stav
+    const freshRecord = registry.getRecord("test.routes-mutation-attempt");
+    assert.ok(freshRecord);
+    assert.equal(freshRecord.manifest.routes.length, 1);
+    assert.equal(freshRecord.manifest.routes[0]!.path, "/init");
+  });
+
+  // 6. pokus změnit nested property například (record.manifest.surfaces as any).api.enabled = false nezmění Registry data
+  it("6. pokus změnit nested property například (record.manifest.surfaces as any).api.enabled = false nezmění Registry data", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({ moduleKey: "test.surfaces-mutation-attempt" });
+    registry.register(mod);
+
+    const record = registry.getRecord("test.surfaces-mutation-attempt");
+    assert.ok(record);
+
+    assert.throws(() => {
+      (record.manifest.surfaces.api as unknown as { enabled: boolean }).enabled = false;
+    }, TypeError);
+
+    assert.equal(record.manifest.surfaces.api.enabled, true);
+
+    const freshRecord = registry.getRecord("test.surfaces-mutation-attempt");
+    assert.ok(freshRecord);
+    assert.equal(freshRecord.manifest.surfaces.api.enabled, true);
+  });
+
+  // 7. pokus změnit (record.manifest.dependencies.required as any[]) nezmění Registry data
+  it("7. pokus změnit (record.manifest.dependencies.required as any[]) nezmění Registry data", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({
+      moduleKey: "test.deps-mutation-attempt",
+      dependencies: {
+        required: [{ moduleKey: "platform.core", versionRange: "^1.0.0" }],
+        optional: [],
+        conflicts: []
+      }
+    });
+    registry.register(mod);
+
+    const record = registry.getRecord("test.deps-mutation-attempt");
+    assert.ok(record);
+
+    assert.throws(() => {
+      (record.manifest.dependencies.required as unknown as Array<unknown>).push({
+        moduleKey: "hacked.dep",
+        versionRange: "^1.0.0"
+      });
+    }, TypeError);
+
+    assert.throws(() => {
+      (record.manifest.dependencies.required as unknown as Array<unknown>)[0] = {
+        moduleKey: "mutated.dep",
+        versionRange: "^1.0.0"
+      };
+    }, TypeError);
+
+    assert.equal(record.manifest.dependencies.required.length, 1);
+    assert.equal(record.manifest.dependencies.required[0]!.moduleKey, "platform.core");
+
+    const freshRecord = registry.getRecord("test.deps-mutation-attempt");
+    assert.ok(freshRecord);
+    assert.equal(freshRecord.manifest.dependencies.required.length, 1);
+    assert.equal(freshRecord.manifest.dependencies.required[0]!.moduleKey, "platform.core");
+  });
+
+  // 8. mutace původního module.manifest.routes PO registraci nezmění registry.getRecord(key).manifest.routes
+  it("8. mutace původního module.manifest PO registraci nezmění autoritativní registry manifest", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({
+      moduleKey: "test.original-isolation",
+      version: "1.0.0",
+      routes: [{ path: "/original", surface: "public", requiresAuth: false }],
+      dependencies: {
+        required: [{ moduleKey: "platform.base", versionRange: "^1.0.0" }],
+        optional: [],
+        conflicts: []
+      }
+    });
+
+    registry.register(mod);
+
+    // Nyní zákeřně mutujeme původní objekt module.manifest, který byl předán do register()
+    mod.manifest.version = "9.9.9";
+    mod.manifest.routes.push({
+      path: "/injected-route",
+      surface: "public",
+      requiresAuth: false
+    });
+    mod.manifest.dependencies.required.push({
+      moduleKey: "injected.dependency",
+      versionRange: "^1.0.0"
+    });
+    (mod.manifest.surfaces.api as { enabled: boolean }).enabled = false;
+
+    // Autoritativní záznam v registru MUSÍ zůstat zcela izolován a nezměněn
+    const record = registry.getRecord("test.original-isolation");
+    assert.ok(record);
+    assert.equal(record.manifest.version, "1.0.0");
+    assert.equal(record.manifest.routes.length, 1);
+    assert.equal(record.manifest.routes[0]!.path, "/original");
+    assert.equal(record.manifest.dependencies.required.length, 1);
+    assert.equal(record.manifest.dependencies.required[0]!.moduleKey, "platform.base");
+    assert.equal(record.manifest.surfaces.api.enabled, true);
+
+    // Zároveň původní runtime instance module zůstává neporušena pro lifecycle hooky
+    assert.equal(record.module, mod);
+  });
+
+  // 9. getRecord() state ochrana z R01 dál PASS
+  it("9. getRecord() state ochrana z R01 dál PASS", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({ moduleKey: "test.r01-state-protection" });
+    registry.register(mod);
+
+    const record = registry.getRecord("test.r01-state-protection");
+    assert.ok(record);
+    assert.equal(record.state, "uninstalled");
+
+    // Pokus o přímou změnu state na snapshotu selže
+    assert.throws(() => {
+      (record as unknown as { state: string }).state = "enabled";
+    }, TypeError);
+
+    // Interní stav registru zůstává uninstalled
+    assert.equal(registry.getRecord("test.r01-state-protection")?.state, "uninstalled");
+  });
+
+  // 10. listRecords() state ochrana z R01 dál PASS
+  it("10. listRecords() state ochrana z R01 dál PASS", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({ moduleKey: "test.r01-list-state" });
+    registry.register(mod);
+
+    const records = registry.listRecords();
+    assert.equal(records.length, 1);
+    assert.equal(records[0]!.state, "uninstalled");
+
+    assert.throws(() => {
+      (records[0] as unknown as { state: string }).state = "enabled";
+    }, TypeError);
+
+    assert.throws(() => {
+      (records as unknown as Array<unknown>).push({} as any);
+    }, TypeError);
+
+    assert.equal(registry.getRecord("test.r01-list-state")?.state, "uninstalled");
+  });
+
+  // 11. recordState() dál funguje
+  it("11. recordState() dál funguje", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({ moduleKey: "test.r01-record-state" });
+    registry.register(mod);
+
+    assert.equal(registry.getRecord("test.r01-record-state")?.state, "uninstalled");
+
+    registry.recordState("test.r01-record-state", "installed");
+    assert.equal(registry.getRecord("test.r01-record-state")?.state, "installed");
+
+    registry.recordState("test.r01-record-state", "enabled");
+    assert.equal(registry.getRecord("test.r01-record-state")?.state, "enabled");
+
+    // Manifest zůstává po změně stavu stále hluboce zmrazen
+    const record = registry.getRecord("test.r01-record-state");
+    assert.ok(record);
+    assert.equal(Object.isFrozen(record.manifest), true);
+    assert.equal(Object.isFrozen(record.manifest.routes), true);
+  });
+
+  // 12. route ownership dál funguje
+  it("12. route ownership dál funguje", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({
+      moduleKey: "test.route-owner-check",
+      routes: [
+        { path: "/deep/auth/callback", surface: "public", requiresAuth: false },
+        { path: "/deep/admin/settings", surface: "admin", requiresAuth: true }
+      ]
+    });
+    registry.register(mod);
+
+    assert.equal(
+      registry.getRouteOwner("public", "/deep/auth/callback"),
+      "test.route-owner-check"
+    );
+    assert.equal(
+      registry.getRouteOwner("admin", "/deep/admin/settings"),
+      "test.route-owner-check"
+    );
+    assert.equal(
+      registry.getRouteOwner("public", "/nonexistent"),
+      undefined
+    );
+  });
+
+  // 13. komplexní hluboké zmrazení všech větví manifestu
+  it("13. komplexní hluboké zmrazení všech větví manifestu", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({
+      moduleKey: "test.all-sections-frozen",
+      compatibility: { synthesisCore: "^1.0.0" },
+      lifecycle: {
+        supportedHooks: ["install", "enable"],
+        requiresRestart: false,
+        disableBehavior: { mode: "fail_closed", dataRetention: "retain" }
+      },
+      surfaces: {
+        api: { enabled: true, surfaces: ["synapi_public"] },
+        ui: { public: { enabled: true, routePrefix: "/test" } }
+      },
+      routes: [{ path: "/test", surface: "public", requiresAuth: false }],
+      permissions: [
+        { key: "perm.read", name: "Read", description: "Read permission", defaultRoles: ["user"] }
+      ],
+      capabilities: ["cap.a", "cap.b"],
+      dataOwnership: {
+        tables: ["test_table"],
+        schemaPath: "database/schema/test.prisma",
+        migrationsPath: "database/migrations",
+        isolatedData: true
+      },
+      events: { emits: ["test.event"], subscribes: [] },
+      jobs: [],
+      cms: {
+        contentPacks: [{ packKey: "pack1", path: "cms/packs/pack1" }],
+        textKeys: ["key1"],
+        help: { cs: { enabled: false, path: "help/cs" } }
+      },
+      healthCheck: { enabled: false, intervalSeconds: 60 },
+      fallback: { enabled: false }
+    });
+
+    registry.register(mod);
+    const record = registry.getRecord("test.all-sections-frozen");
+    assert.ok(record);
+
+    const m = record.manifest;
+    assert.equal(Object.isFrozen(m), true);
+    assert.equal(Object.isFrozen(m.compatibility), true);
+    assert.equal(Object.isFrozen(m.lifecycle), true);
+    assert.equal(Object.isFrozen(m.lifecycle.supportedHooks), true);
+    assert.equal(Object.isFrozen(m.lifecycle.disableBehavior), true);
+    assert.equal(Object.isFrozen(m.surfaces), true);
+    assert.equal(Object.isFrozen(m.surfaces.api), true);
+    assert.equal(Object.isFrozen(m.surfaces.api.surfaces), true);
+    assert.equal(Object.isFrozen(m.permissions), true);
+    assert.equal(Object.isFrozen(m.permissions[0]), true);
+    assert.equal(Object.isFrozen(m.permissions[0]!.defaultRoles), true);
+    assert.equal(Object.isFrozen(m.capabilities), true);
+    assert.equal(Object.isFrozen(m.dataOwnership), true);
+    assert.equal(Object.isFrozen(m.dataOwnership.tables), true);
+    assert.equal(Object.isFrozen(m.events), true);
+    assert.equal(Object.isFrozen(m.events.emits), true);
+    assert.equal(Object.isFrozen(m.events.subscribes), true);
+    assert.equal(Object.isFrozen(m.cms), true);
+    assert.equal(Object.isFrozen(m.cms!.contentPacks), true);
+    assert.equal(Object.isFrozen(m.cms!.contentPacks[0]), true);
+    assert.equal(Object.isFrozen(m.cms!.textKeys), true);
+    assert.equal(Object.isFrozen(m.healthCheck), true);
+    assert.equal(Object.isFrozen(m.fallback), true);
+  });
+
+  // 14. unit testy pomocné funkce deepFreeze
+  it("14. unit testy pomocné funkce deepFreeze", () => {
+    // Primitiva a funkce zůstávají netknuté
+    assert.equal(deepFreeze(42), 42);
+    assert.equal(deepFreeze("text"), "text");
+    assert.equal(deepFreeze(true), true);
+    assert.equal(deepFreeze(null), null);
+    assert.equal(deepFreeze(undefined), undefined);
+
+    // Objekt s cyklickou referencí nezpůsobí zacyklení
+    const cyclicObj: Record<string, unknown> = { a: 1 };
+    cyclicObj.self = cyclicObj;
+    assert.doesNotThrow(() => {
+      deepFreeze(cyclicObj);
+    });
+    assert.equal(Object.isFrozen(cyclicObj), true);
+
+    // Vnořené pole objektů
+    const nested = { items: [{ id: "1" }, { id: "2" }] };
+    deepFreeze(nested);
+    assert.equal(Object.isFrozen(nested), true);
+    assert.equal(Object.isFrozen(nested.items), true);
+    assert.equal(Object.isFrozen(nested.items[0]), true);
+    assert.equal(Object.isFrozen(nested.items[1]), true);
+  });
+
+  // 15. typecheck contract: statická typová kontrola zabraňuje přímé mutaci bez explicitního unsafe castu
+  it("15. typecheck contract zabraňuje přímé mutaci bez explicitního unsafe castu", () => {
+    const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
+    const mod = createTestModule({ moduleKey: "test.typecheck-immutability" });
+    registry.register(mod);
+
+    const record = registry.getRecord("test.typecheck-immutability");
+    assert.ok(record);
+
+    // Ověření, že TypeScript striktně brání běžným mutacím (type-level)
+    // a runtime Object.freeze vyvolá TypeError (runtime-level):
+
+    assert.throws(() => {
+      // @ts-expect-error - record.state je readonly
+      record.state = "enabled";
+    }, TypeError);
+
+    assert.throws(() => {
+      // @ts-expect-error - record.manifest.version je readonly
+      record.manifest.version = "2.0.0";
+    }, TypeError);
+
+    assert.throws(() => {
+      // @ts-expect-error - record.manifest.routes je ReadonlyArray bez push()
+      record.manifest.routes.push({ path: "/hack", surface: "public", requiresAuth: false });
+    }, TypeError);
+
+    assert.throws(() => {
+      // @ts-expect-error - record.manifest.dependencies.required je ReadonlyArray bez push()
+      record.manifest.dependencies.required.push({ moduleKey: "another.dep", versionRange: "^1.0.0" });
+    }, TypeError);
+
+    assert.throws(() => {
+      // @ts-expect-error - record.manifest.surfaces.api.enabled je readonly
+      record.manifest.surfaces.api.enabled = false;
+    }, TypeError);
+
+    assert.equal(record.manifest.version, "1.0.0");
+  });
+});

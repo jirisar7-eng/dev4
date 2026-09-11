@@ -5,4 +5,5 @@
 
 export * from "./registry.types.js";
 export * from "./registry.errors.js";
+export * from "./registry.utils.js";
 export * from "./registry.js";

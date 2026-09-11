@@ -6,6 +6,20 @@
 import type { IModule, IModuleManifest, ModuleLifecycleState } from "../contract/types.js";
 
 /**
+ * Rekurzivní typ pro hluboce neměnná data (deep read-only).
+ * Zabraňuje jakékoli přímé mutaci vnořených polí a objektů bez explicitního unsafe castu.
+ */
+export type DeepReadonly<T> = T extends Function | boolean | number | string | symbol | bigint | null | undefined
+  ? T
+  : T extends (infer R)[]
+  ? ReadonlyArray<DeepReadonly<R>>
+  : T extends readonly (infer R)[]
+  ? ReadonlyArray<DeepReadonly<R>>
+  : T extends object
+  ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+  : T;
+
+/**
  * Konfigurační volby předávané instanci ModuleRegistry při inicializaci.
  */
 export interface ModuleRegistryOptions {
@@ -23,7 +37,7 @@ export interface ModuleRegistryOptions {
 
 /**
  * Autoritativní veřejný read-only záznam registrovaného modulu v Module Registry.
- * Všechny vlastnosti včetně state jsou read-only snapshotem.
+ * Všechny vlastnosti včetně state a vnořeného manifestu jsou hluboce read-only.
  * Změny stavu lze provádět výhradně přes autoritativní API recordState().
  */
 export interface IModuleRegistryRecord {
@@ -44,9 +58,10 @@ export interface IModuleRegistryRecord {
   readonly state: ModuleLifecycleState;
 
   /**
-   * Validovaný a typovaný manifest modulu.
+   * Validovaný, hluboce neměnný manifest modulu.
+   * Veškerá vnořená pole i objekty jsou zmrazeny a read-only.
    */
-  readonly manifest: IModuleManifest;
+  readonly manifest: DeepReadonly<IModuleManifest>;
 
   /**
    * Běhová instance modulu.
@@ -86,13 +101,13 @@ export interface IModuleRegistry {
 
   /**
    * Vrátí bezpečný read-only snapshot záznamu modulu (IModuleRegistryRecord) dle moduleKey nebo undefined.
-   * Změna vráceného snapshotu neovlivní interní stav registru.
+   * Změna vráceného snapshotu ani jeho vnořeného manifestu neovlivní interní stav registru.
    */
   getRecord(moduleKey: string): IModuleRegistryRecord | undefined;
 
   /**
    * Vrátí seznam bezpečných read-only snapshotů všech registrovaných modulů.
-   * Změna prvků pole neovlivní interní stav registru.
+   * Změna prvků pole ani vnořených manifestů neovlivní interní stav registru.
    */
   listRecords(): readonly IModuleRegistryRecord[];
 

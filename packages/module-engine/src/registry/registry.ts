@@ -9,6 +9,7 @@
  * - in-memory stav (žádný přímý zápis do DB v této fázi)
  * - nezávislý na Dependency Resolveru (moduly se mohou registrovat i bez přítomnosti závislostí)
  * - striktní zapouzdření stavu (veřejné API vrací neměnné snapshoty, interní mutable record je izolován)
+ * - hluboké zmrazení manifestu (deep freeze a oddělená manifest reprezentace přes structuredClone)
  */
 
 import semver from "semver";
@@ -16,21 +17,24 @@ import { safeValidateModuleManifest } from "../contract/validator.js";
 import { isValidSemver } from "../contract/manifest.schema.js";
 import type { IModule, IModuleManifest, ModuleLifecycleState } from "../contract/types.js";
 import type {
+  DeepReadonly,
   IModuleRegistry,
   IModuleRegistryRecord,
   ModuleRegistryOptions
 } from "./registry.types.js";
 import { ModuleRegistryError } from "./registry.errors.js";
+import { deepFreeze } from "./registry.utils.js";
 
 /**
  * Interní mutable záznam držený ModuleRegistry.
  * Není exportován do veřejného API balíčku a externí kód k němu nemá přístup.
+ * Manifest je autoritativní, oddělený a hluboce neměnný.
  */
 interface InternalModuleRegistryRecord {
   readonly moduleKey: string;
   readonly version: string;
   state: ModuleLifecycleState;
-  readonly manifest: IModuleManifest;
+  readonly manifest: DeepReadonly<IModuleManifest>;
   readonly module: IModule;
   readonly registeredAt: string;
 }
@@ -76,6 +80,7 @@ export class ModuleRegistry implements IModuleRegistry {
    *
    * Po registraci je stav životního cyklu nastaven na 'uninstalled'.
    * Registrace nespouští žádné lifecycle hooky.
+   * Manifest je uložen jako samostatný, hluboce zmrazený klon (deeply immutable).
    */
   public register(module: IModule): void {
     if (!module || typeof module !== "object" || !module.manifest) {
@@ -95,7 +100,10 @@ export class ModuleRegistry implements IModuleRegistry {
       );
     }
 
-    const manifest = Object.freeze({ ...validation.data });
+    // Vytvoření samostatného klonu a jeho hluboké zmrazení pro garanci
+    // úplného oddělení od původního objektu module.manifest a runtime immutability
+    const manifestClone = structuredClone(validation.data);
+    const manifest = deepFreeze(manifestClone);
     const { moduleKey } = manifest;
 
     // 2. Kontrola duplicity moduleKey
@@ -209,6 +217,7 @@ export class ModuleRegistry implements IModuleRegistry {
 
   /**
    * Převede interní mutable záznam na bezpečný, zmrazený read-only snapshot.
+   * Manifest je již hluboce zmrazen v záznamu.
    */
   private toPublicRecord(internal: InternalModuleRegistryRecord): IModuleRegistryRecord {
     return Object.freeze({
@@ -244,7 +253,7 @@ export class ModuleRegistry implements IModuleRegistry {
 
   /**
    * Vrátí bezpečný read-only snapshot autoritativního záznamu registru pro daný modul.
-   * Nevrací referenci na interní mutable záznam.
+   * Nevrací referenci na interní mutable záznam a manifest je hluboce neměnný.
    */
   public getRecord(moduleKey: string): IModuleRegistryRecord | undefined {
     const internal = this.records.get(moduleKey);
@@ -256,7 +265,7 @@ export class ModuleRegistry implements IModuleRegistry {
 
   /**
    * Vrátí seznam bezpečných read-only snapshotů všech autoritativních záznamů registru.
-   * Pole je zmrazeno a položky jsou oddělené snapshoty.
+   * Pole je zmrazeno a položky i jejich manifesty jsou hluboce neměnné.
    */
   public listRecords(): readonly IModuleRegistryRecord[] {
     return Object.freeze(
