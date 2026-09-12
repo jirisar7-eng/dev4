@@ -1,0 +1,8 @@
+{
+  "name": "Synthesis / Táta má právo",
+  "description": "DEV4 platform monorepo and module engine",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

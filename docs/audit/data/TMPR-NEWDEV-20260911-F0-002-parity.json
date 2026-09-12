@@ -1,0 +1,1009 @@
+{
+  "taskId": "TMPR-NEWDEV-20260911-F0-002",
+  "timestamp": "2026-09-11T19:41:41.456Z",
+  "sourceRepo": "https://github.com/jirisar7-eng/dev3",
+  "referenceHead": "696df6255dfe1e0f1ac21a02b002999b557629e4",
+  "brandAuthority": "TMPR-BRAND-BLUE-1.0",
+  "summary": {
+    "PREVZIT": 8,
+    "PREVEST_NA_DATA": 6,
+    "PREPSAT": 22,
+    "SLOUCIT": 4,
+    "ODLOZIT": 4,
+    "VYRADIT": 8,
+    "NEURCENO": 1,
+    "total": 53
+  },
+  "sensitiveGatesCount": 16,
+  "capabilities": [
+    {
+      "id": "CAP-DATA-001",
+      "sourceCapability": "Registr a adresář OSPOD v ČR",
+      "sourceFiles": [
+        "src/data/ospodDataset.json",
+        "prisma/schema.prisma (Subjekt, Pracovnik)"
+      ],
+      "classification": "PŘEVZÍT",
+      "reason": "Vyčištěná a kompletní databáze všech pracovišť OSPOD v ČR s kontakty a geokódy. Má obrovskou doménovou hodnotu.",
+      "targetLayer": "Project Package Táta má právo",
+      "targetModuleKey": "institutions.registry",
+      "dependencies": [
+        "PostgreSQL",
+        "Prisma"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "STATIC_DATA_IMPORT_GATE",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-DATA-002",
+      "sourceCapability": "Registr a metadata soudů ČR",
+      "sourceFiles": [
+        "src/data/soudyDataset.ts",
+        "src/data/soudyVerifiedMetadata.ts"
+      ],
+      "classification": "PŘEVZÍT",
+      "reason": "Ověřená datová sada okresních, krajských a vrchních soudů včetně datových schránek a příslušností.",
+      "targetLayer": "Project Package Táta má právo",
+      "targetModuleKey": "institutions.registry",
+      "dependencies": [
+        "PostgreSQL"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "STATIC_DATA_IMPORT_GATE",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-DATA-003",
+      "sourceCapability": "Adresář advokátů ČAK pro rodinné právo",
+      "sourceFiles": [
+        "src/data/cakAdvokatiDataset.ts"
+      ],
+      "classification": "PŘEVZÍT",
+      "reason": "Validovaný dataset advokátů se zaměřením na opatrovnické a rodinné právo.",
+      "targetLayer": "Project Package Táta má právo",
+      "targetModuleKey": "institutions.registry",
+      "dependencies": [
+        "PostgreSQL"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "STATIC_DATA_IMPORT_GATE",
+      "priority": "P1"
+    },
+    {
+      "id": "CAP-DATA-004",
+      "sourceCapability": "Vzory právních podání (Legal Pack 2.0)",
+      "sourceFiles": [
+        "src/data/legalDrafts20.ts",
+        "src/data/legalDocuments.ts",
+        "src/data/legalTemplates.ts"
+      ],
+      "classification": "PŘEVÉST NA DATA",
+      "reason": "187 KB ověřených vzorů podání (návrh na střídavou péči, úpravu styku, výživné). Patří do databázového registru šablon.",
+      "targetLayer": "Synthesis CMS",
+      "targetModuleKey": "legal.templates",
+      "dependencies": [
+        "Synthesis CMS Template Registry"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "CONTENT_IMPORT_GATE",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-DATA-005",
+      "sourceCapability": "Právní průvodci a návody (Legal Guides)",
+      "sourceFiles": [
+        "src/data/legalGuidesSeed.ts",
+        "src/components/public/legal/*"
+      ],
+      "classification": "PŘEVÉST NA DATA",
+      "reason": "Metodické texty o průběhu řízení, znaleckých posudcích, odvoláních a mezinárodních sporech. Patří do CMS článků.",
+      "targetLayer": "Synthesis CMS",
+      "targetModuleKey": "legal.guides",
+      "dependencies": [
+        "Synthesis CMS Articles"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "CONTENT_IMPORT_GATE",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-DATA-006",
+      "sourceCapability": "Slovník a wiki rodinného práva",
+      "sourceFiles": [
+        "src/data/wikiSeed.ts",
+        "prisma/schema.prisma (WikiTerm)"
+      ],
+      "classification": "PŘEVÉST NA DATA",
+      "reason": "Vysvětlení pojmů (OSPOD, kolizní opatrovník, vyživovací povinnost, střídavá péče). Patří do CMS pojmů.",
+      "targetLayer": "Synthesis CMS",
+      "targetModuleKey": "education.wiki",
+      "dependencies": [
+        "Synthesis CMS Wiki"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "CONTENT_IMPORT_GATE",
+      "priority": "P1"
+    },
+    {
+      "id": "CAP-DATA-007",
+      "sourceCapability": "Memento otců (databáze a kauzy)",
+      "sourceFiles": [
+        "src/data/mementoSeed.ts",
+        "prisma/schema.prisma (MementoCase)"
+      ],
+      "classification": "PŘEVÉST NA DATA",
+      "reason": "Strukturované záznamy kauz a systémových pochybení. Patří do specializovaného CMS registru případů.",
+      "targetLayer": "Project Package Táta má právo",
+      "targetModuleKey": "community.memento",
+      "dependencies": [
+        "Synthesis CMS"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "CONTENT_IMPORT_GATE",
+      "priority": "P1"
+    },
+    {
+      "id": "CAP-DATA-008",
+      "sourceCapability": "Akademie, kvízy a videolekce",
+      "sourceFiles": [
+        "src/data/quizzesSeed.ts",
+        "src/data/videosSeed.ts",
+        "prisma/schema.prisma (Quiz, AcademyVideo)"
+      ],
+      "classification": "PŘEVÉST NA DATA",
+      "reason": "Edukační obsah pro rodiče. Patří do vzdělávacího modulu v CMS.",
+      "targetLayer": "Synthesis CMS",
+      "targetModuleKey": "education.academy",
+      "dependencies": [
+        "Synthesis CMS Media"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "CONTENT_IMPORT_GATE",
+      "priority": "P2"
+    },
+    {
+      "id": "CAP-DATA-009",
+      "sourceCapability": "Statické články, FAQ a novinky",
+      "sourceFiles": [
+        "prisma/seed-articles.ts",
+        "prisma/seed-help-news.ts",
+        "src/components/public/FaqSection.tsx"
+      ],
+      "classification": "PŘEVÉST NA DATA",
+      "reason": "Hardcoded FAQ a seedované novinky je třeba převést do standardního CMS úložiště článků.",
+      "targetLayer": "Synthesis CMS",
+      "targetModuleKey": "cms.articles",
+      "dependencies": [
+        "Synthesis CMS"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "CONTENT_IMPORT_GATE",
+      "priority": "P1"
+    },
+    {
+      "id": "CAP-ENG-001",
+      "sourceCapability": "Výpočetní engine výživného (Alimony Calculator)",
+      "sourceFiles": [
+        "src/components/public/AlimonyCalculatorView.tsx",
+        "tests/alimonyCalculator.test.ts"
+      ],
+      "classification": "PŘEVZÍT",
+      "reason": "Matematická logika výpočtu dle doporučujících tabulek MS ČR (věkové kategorie, podíly z příjmu, kontrolní částky). Logika je prověřená testy.",
+      "targetLayer": "Domain Module",
+      "targetModuleKey": "family.alimony",
+      "dependencies": [
+        "TypeScript čistá knihovna"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-ENG-002",
+      "sourceCapability": "Care Occurrence & Age Engine (plánování péče)",
+      "sourceFiles": [
+        "src/services/care/careOccurrenceEngine.ts",
+        "src/services/care/ageEngine.ts",
+        "src/services/care/careMetricsEngine.ts"
+      ],
+      "classification": "PŘEVZÍT",
+      "reason": "Algoritmus generování střídání péče (sudé/liché týdny, svátky, prázdniny) a výpočtu věku/milníků dítěte. Vysoce spolehlivá byznys logika.",
+      "targetLayer": "Domain Module",
+      "targetModuleKey": "family.child-care",
+      "dependencies": [
+        "TypeScript čistá knihovna"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-ENG-003",
+      "sourceCapability": "Deterministický parser rozsudků",
+      "sourceFiles": [
+        "src/services/deterministicJudgmentParser.ts",
+        "src/services/judgmentParserService.ts"
+      ],
+      "classification": "PŘEVZÍT",
+      "reason": "RegEx a pravidly řízený parser výroků rozsudků (výše výživného, frekvence styku, dny předávání) bez závislosti na LLM halucinacích.",
+      "targetLayer": "Domain Module",
+      "targetModuleKey": "legal.judgment-parser",
+      "dependencies": [
+        "TypeScript čistá knihovna"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P1"
+    },
+    {
+      "id": "CAP-ENG-004",
+      "sourceCapability": "e-Sbírka Quota Guard & Lock Guard",
+      "sourceFiles": [
+        "src/services/esbirka/EsbirkaQuotaGuard.ts",
+        "src/services/esbirka/EsbirkaLockGuard.ts",
+        "src/services/esbirka/EsbirkaNormalizer.ts"
+      ],
+      "classification": "PŘEVZÍT",
+      "reason": "Kritická ochrana proti překročení limitů e-Sbírky (1 req/s, max 5 req/den, zámky konkurence). Splňuje zákonné a systémové podmínky.",
+      "targetLayer": "Worker",
+      "targetModuleKey": "legal.statutes-sync",
+      "dependencies": [
+        "Redis nebo DB lock"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-ENG-005",
+      "sourceCapability": "e-Sbírka synchronizační klient",
+      "sourceFiles": [
+        "src/services/esbirka/EsbirkaSyncEngine.ts",
+        "src/services/esbirka/EsbirkaApiClient.ts"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Napojení na REST/OpenData e-Sbírky je funkční, ale musí být reimplementováno jako izolovaný asynchronní Worker job.",
+      "targetLayer": "Worker",
+      "targetModuleKey": "legal.statutes-sync",
+      "dependencies": [
+        "Worker Queue",
+        "PostgreSQL"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P1"
+    },
+    {
+      "id": "CAP-ENG-006",
+      "sourceCapability": "BIFF komunikační validátor",
+      "sourceFiles": [
+        "src/components/public/BiffCommunicationView.tsx"
+      ],
+      "classification": "PŘEVZÍT",
+      "reason": "Heuristiky a kontrolní seznam pro metodu BIFF (Brief, Informative, Friendly, Firm). Algoritmus kontroly textu je znovupoužitelný.",
+      "targetLayer": "Domain Module",
+      "targetModuleKey": "support.communication",
+      "dependencies": [
+        "TypeScript"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P1"
+    },
+    {
+      "id": "CAP-ENG-007",
+      "sourceCapability": "Offline šifrovaný vault (WebCrypto AES-GCM)",
+      "sourceFiles": [
+        "src/services/offline/CryptoService.ts",
+        "src/services/offline/SecureDB.ts",
+        "src/services/offline/OfflineSyncService.ts"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Kryptografický koncept (odvození klíče PBKDF2, šifrování AES-GCM v prohlížeči) zachovat, ale reimplementovat čistě v TypeScriptu bez vazby na starý storage.",
+      "targetLayer": "Můj případ",
+      "targetModuleKey": "case.offline-vault",
+      "dependencies": [
+        "WebCrypto API",
+        "IndexedDB"
+      ],
+      "sensitiveData": true,
+      "migrationGate": "SEPARATE_SECURITY_LEGAL_MIGRATION_GATE_REQUIRED",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-UI-001",
+      "sourceCapability": "Veřejný portál a rozcestník Táta má právo",
+      "sourceFiles": [
+        "src/components/public/PublicPortal.tsx",
+        "src/components/public/Hero.tsx",
+        "src/App.tsx"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Starý monolitický React SPA přepsat na Next.js App Router s SSR, dle specifikace Blue Brand 1.0 (Inter Variable, #2563EB, mobilní first, bez scrollovacího maratonu).",
+      "targetLayer": "Project Package Táta má právo",
+      "targetModuleKey": "portal.public",
+      "dependencies": [
+        "Next.js App Router",
+        "Tailwind CSS"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-UI-002",
+      "sourceCapability": "Registr a mapa subjektů (UI)",
+      "sourceFiles": [
+        "src/components/public/RegistrSubjektu.tsx",
+        "src/components/public/SubjektyMap.tsx",
+        "src/components/public/MapaSubjektuView.tsx"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Obří 96 KB komponentu rozložit na modulární server components (filtrování dle krajů, fulltext, detail instituce, odlehčená mapa).",
+      "targetLayer": "Project Package Táta má právo",
+      "targetModuleKey": "institutions.registry-ui",
+      "dependencies": [
+        "Next.js",
+        "Leaflet/MapLibre"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P1"
+    },
+    {
+      "id": "CAP-UI-003",
+      "sourceCapability": "Krizový portál SOS plán prvních 48 hodin",
+      "sourceFiles": [
+        "src/components/public/community/SosPlanView.tsx",
+        "src/components/public/community/SosPlan48HoursView.tsx"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Klíčový rozcestník pro otce v akutní krizové situaci (odebrání dítěte, obvinění). Přepsat na přehledný, rychlý mobilní manuál.",
+      "targetLayer": "Project Package Táta má právo",
+      "targetModuleKey": "support.crisis",
+      "dependencies": [
+        "Next.js"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-UI-004",
+      "sourceCapability": "Můj případ — Přehled spisu, účastníci a děti",
+      "sourceFiles": [
+        "src/pages/MyCasePage.tsx",
+        "src/components/case/CaseOverviewTab.tsx",
+        "src/components/case/CaseChildrenTab.tsx"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Základní zóna klientského spisu. Nutno vytvořit v novém Next.js portálu se striktní autorizací a zero-trust izolací spisu.",
+      "targetLayer": "Můj případ",
+      "targetModuleKey": "case.core",
+      "dependencies": [
+        "Next.js",
+        "NestJS API",
+        "PostgreSQL"
+      ],
+      "sensitiveData": true,
+      "migrationGate": "SEPARATE_SECURITY_LEGAL_MIGRATION_GATE_REQUIRED",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-UI-005",
+      "sourceCapability": "Můj případ — Kalendář péče a harmonogram styku",
+      "sourceFiles": [
+        "src/components/case/CaseCalendarTab.tsx",
+        "src/components/case/care/CareCalendarView.tsx"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Zobrazení plánu péče v kalendáři, výpočet dnů a hodin. Přepsat na moderní kalendářovou komponentu napojenou na Care Occurrence Engine.",
+      "targetLayer": "Můj případ",
+      "targetModuleKey": "family.child-care-ui",
+      "dependencies": [
+        "Next.js",
+        "Care Engine"
+      ],
+      "sensitiveData": true,
+      "migrationGate": "SEPARATE_SECURITY_LEGAL_MIGRATION_GATE_REQUIRED",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-UI-006",
+      "sourceCapability": "Můj případ — Trezor dokumentů a evidence důkazů",
+      "sourceFiles": [
+        "src/components/case/CaseDocumentsTab.tsx",
+        "src/components/case/CaseEvidenceTab.tsx",
+        "src/components/case/CaseSecurityTab.tsx"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Nahrávání listin, fotografií a nahrávek s hashováním a metadaty. Přepsat na přímé S3 presigned uploady do MinIO + asynchronní ClamAV sken.",
+      "targetLayer": "Můj případ",
+      "targetModuleKey": "case.documents",
+      "dependencies": [
+        "MinIO S3",
+        "ClamAV",
+        "NestJS"
+      ],
+      "sensitiveData": true,
+      "migrationGate": "SEPARATE_SECURITY_LEGAL_MIGRATION_GATE_REQUIRED",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-UI-007",
+      "sourceCapability": "Můj případ — Soudní řízení, procesní lhůty a úkoly",
+      "sourceFiles": [
+        "src/components/case/CaseProceedingsTab.tsx",
+        "src/components/case/CaseTasksTab.tsx",
+        "src/components/case/CaseEventsTab.tsx"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Sledování běžících lhůt soudního jednání, odvolání a vyjádření. Přepsat s jasným vizuálním semaforem lhůt.",
+      "targetLayer": "Můj případ",
+      "targetModuleKey": "case.proceedings",
+      "dependencies": [
+        "NestJS",
+        "PostgreSQL"
+      ],
+      "sensitiveData": true,
+      "migrationGate": "SEPARATE_SECURITY_LEGAL_MIGRATION_GATE_REQUIRED",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-UI-008",
+      "sourceCapability": "Můj případ — Deník rodiče a časová osa kauzy",
+      "sourceFiles": [
+        "src/components/case/CaseNotesTab.tsx",
+        "src/components/case/CaseTimelineTab.tsx"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Zápisky incidentů, průběhu předávání a komunikace s OSPOD. Přepsat jako časovou osu s exportem do PDF/HTML pro soud.",
+      "targetLayer": "Můj případ",
+      "targetModuleKey": "case.timeline",
+      "dependencies": [
+        "NestJS",
+        "PostgreSQL"
+      ],
+      "sensitiveData": true,
+      "migrationGate": "SEPARATE_SECURITY_LEGAL_MIGRATION_GATE_REQUIRED",
+      "priority": "P1"
+    },
+    {
+      "id": "CAP-UI-009",
+      "sourceCapability": "CoParentHub — Párování a režimy konfliktu",
+      "sourceFiles": [
+        "src/pages/portal/CoParentPage.tsx",
+        "src/components/coparent/InviteModal.tsx"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Unikátní koncept 3 režimů (COOPERATION, DISAGREEMENT, HIGH_CONFLICT). Přepsat jako čistý stavový automat v NestJS s WebSocket/Push notifikacemi.",
+      "targetLayer": "CoParentHub",
+      "targetModuleKey": "coparent.core",
+      "dependencies": [
+        "NestJS State Machine",
+        "PostgreSQL"
+      ],
+      "sensitiveData": true,
+      "migrationGate": "SEPARATE_SECURITY_LEGAL_MIGRATION_GATE_REQUIRED",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-UI-010",
+      "sourceCapability": "CoParentHub — Záznamy předávání dětí a sdílené výdaje",
+      "sourceFiles": [
+        "src/controllers/coparentController.ts",
+        "src/services/coparentService.ts"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Dvoustranné potvrzování předání (čas, místo, stav) a schvalování mimořádných nákladů na dítě. Přepsat s auditním otiskem.",
+      "targetLayer": "CoParentHub",
+      "targetModuleKey": "coparent.handovers-expenses",
+      "dependencies": [
+        "NestJS",
+        "PostgreSQL"
+      ],
+      "sensitiveData": true,
+      "migrationGate": "SEPARATE_SECURITY_LEGAL_MIGRATION_GATE_REQUIRED",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-UI-011",
+      "sourceCapability": "CoParentHub — Tisk auditního protokolu pro soud",
+      "sourceFiles": [
+        "src/components/coparent/AuditPrintView.tsx"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Generování objektivního, soudně akceptovatelného protokolu o plnění péče a komunikaci. Přepsat jako server-side PDF renderer.",
+      "targetLayer": "CoParentHub",
+      "targetModuleKey": "coparent.audit-export",
+      "dependencies": [
+        "Puppeteer/Chromium nebo PDFKit"
+      ],
+      "sensitiveData": true,
+      "migrationGate": "SEPARATE_SECURITY_LEGAL_MIGRATION_GATE_REQUIRED",
+      "priority": "P1"
+    },
+    {
+      "id": "CAP-UI-012",
+      "sourceCapability": "Uživatelský profil, zabezpečení a přihlášení",
+      "sourceFiles": [
+        "src/components/private/UserProfileView.tsx",
+        "src/components/public/LoginPage.tsx",
+        "src/services/authService.ts",
+        "src/services/passkeyService.ts",
+        "src/services/totpService.ts"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Autentizace s podporou hesel (argon2/bcrypt), TOTP 2FA a WebAuthn Passkeys. Přepsat do centralizovaného Synthesis Auth Service.",
+      "targetLayer": "Synthesis OS",
+      "targetModuleKey": "auth.core",
+      "dependencies": [
+        "NestJS Auth",
+        "WebAuthn SDK"
+      ],
+      "sensitiveData": true,
+      "migrationGate": "SEPARATE_SECURITY_LEGAL_MIGRATION_GATE_REQUIRED",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-ADM-001",
+      "sourceCapability": "Synthesis Administrace (Dashboard)",
+      "sourceFiles": [
+        "src/components/admin/AdminDashboard.tsx",
+        "src/components/admin/layout/AdminSidebar.tsx"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Starý 35-záložkový monolitický dashboard nahradit čistou modulární administrací v Next.js s RBAC právy.",
+      "targetLayer": "Synthesis Administrace",
+      "targetModuleKey": "admin.dashboard",
+      "dependencies": [
+        "Next.js",
+        "Synthesis OS RBAC"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-ADM-002",
+      "sourceCapability": "Synthesis RBAC & Správa uživatelů",
+      "sourceFiles": [
+        "src/components/admin/UserManager.tsx",
+        "src/routes/adminRoutes.ts",
+        "prisma/schema.prisma (User, Role, Permission)"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Správa uživatelů, rolí (Superadmin, Admin, Lawyer, Volunteer, Client) a oprávnění. Přepsat na striktní CASL / Policy Engine v NestJS.",
+      "targetLayer": "Synthesis OS",
+      "targetModuleKey": "auth.rbac",
+      "dependencies": [
+        "NestJS Guards",
+        "PostgreSQL"
+      ],
+      "sensitiveData": true,
+      "migrationGate": "SEPARATE_SECURITY_LEGAL_MIGRATION_GATE_REQUIRED",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-ADM-003",
+      "sourceCapability": "Správa a moderace subjektů (OSPOD, soudy, kontakty)",
+      "sourceFiles": [
+        "src/components/admin/SubjektManager.tsx",
+        "src/components/admin/ContactModerationManager.tsx"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Schvalování a revize kontaktů v databázi institucí. Přepsat jako administrační rozhraní s historií změn.",
+      "targetLayer": "Synthesis Administrace",
+      "targetModuleKey": "institutions.moderation",
+      "dependencies": [
+        "Next.js",
+        "NestJS API"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P1"
+    },
+    {
+      "id": "CAP-ADM-004",
+      "sourceCapability": "Synthesis Brand Studio & Asset Management",
+      "sourceFiles": [
+        "src/components/admin/BrandingManager.tsx",
+        "src/services/brandingService.ts",
+        "prisma/schema.prisma (BrandAsset*)"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Správa verzí log, barev, fontů a exportních profilů pro generované dokumenty. Přepsat jako čistou platformní službu.",
+      "targetLayer": "Synthesis CMS",
+      "targetModuleKey": "branding.studio",
+      "dependencies": [
+        "MinIO S3",
+        "PostgreSQL"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P2"
+    },
+    {
+      "id": "CAP-ADM-005",
+      "sourceCapability": "Synthesis Text Registry / CMS Page Engine",
+      "sourceFiles": [
+        "src/components/admin/TextManager.tsx",
+        "src/components/admin/CmsManager.tsx",
+        "src/services/textService.ts",
+        "src/services/cmsService.ts"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Centralizovaný registr lokalizovaných textů, stránek a systémových hlášek. Nahradit dosavadní hardcoding.",
+      "targetLayer": "Synthesis CMS",
+      "targetModuleKey": "cms.text-registry",
+      "dependencies": [
+        "PostgreSQL",
+        "Next.js"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "CONTENT_IMPORT_GATE",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-ADM-006",
+      "sourceCapability": "Team Center (tikety, dobrovolníci, spolková agenda)",
+      "sourceFiles": [
+        "src/components/team/TeamCenterDashboard.tsx",
+        "src/routes/teamRoutes.ts",
+        "prisma/schema.prisma (VolunteerApplication, VolunteerCodexAgreement)"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Pracovní prostor spolku pro koordinaci dobrovolníků, schvalování dohod a odbavování klientských dotazů.",
+      "targetLayer": "Team Center",
+      "targetModuleKey": "team.workspace",
+      "dependencies": [
+        "Next.js",
+        "NestJS API"
+      ],
+      "sensitiveData": true,
+      "migrationGate": "SEPARATE_SECURITY_LEGAL_MIGRATION_GATE_REQUIRED",
+      "priority": "P1"
+    },
+    {
+      "id": "CAP-ADM-007",
+      "sourceCapability": "Synthesis Control Plane (operace a tikety)",
+      "sourceFiles": [
+        "src/components/admin/control-center/SynthesisProjectControlCenter.tsx",
+        "src/services/controlPlaneService.ts",
+        "src/routes/projectControlRoutes.ts"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Auditovaný ticketing změn a řízení rizik operací. Přepsat jako nezávislou komponentu platformy Synthesis OS.",
+      "targetLayer": "Synthesis OS",
+      "targetModuleKey": "platform.control-plane",
+      "dependencies": [
+        "NestJS",
+        "PostgreSQL"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P2"
+    },
+    {
+      "id": "CAP-MRG-001",
+      "sourceCapability": "Auditní logování napříč doménami",
+      "sourceFiles": [
+        "prisma/schema.prisma (AuditLog, LegalAuditLog, CoParentAuditLog, SensitiveAccessLog, LegalSyncAudit)"
+      ],
+      "classification": "SLOUČIT",
+      "reason": "5 různých auditních tabulek a logů sloučit do jednoho kanonického neměnného append-only auditního modelu s typem události a hashováním.",
+      "targetLayer": "Synthesis OS",
+      "targetModuleKey": "audit.ledger",
+      "dependencies": [
+        "PostgreSQL",
+        "Audit Engine"
+      ],
+      "sensitiveData": true,
+      "migrationGate": "SEPARATE_SECURITY_LEGAL_MIGRATION_GATE_REQUIRED",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-MRG-002",
+      "sourceCapability": "Klientský spis (sloučení UserCase a Case)",
+      "sourceFiles": [
+        "prisma/schema.prisma (UserCase vs Case, UserChild vs Child, UserDocument vs CaseDocument)"
+      ],
+      "classification": "SLOUČIT",
+      "reason": "V DEV3 existuje legacy UserCase vedle pokročilého Case. Sloučit do jednoho kanonického schématu Case.",
+      "targetLayer": "Můj případ",
+      "targetModuleKey": "case.core",
+      "dependencies": [
+        "PostgreSQL"
+      ],
+      "sensitiveData": true,
+      "migrationGate": "SEPARATE_SECURITY_LEGAL_MIGRATION_GATE_REQUIRED",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-MRG-003",
+      "sourceCapability": "Evidence institucí a verified profilů",
+      "sourceFiles": [
+        "prisma/schema.prisma (Subjekt vs SubjectVerifiedProfile vs SubjectInformationSource)"
+      ],
+      "classification": "SLOUČIT",
+      "reason": "Sloučit roztříštěné modely subjektu a ověřeného profilu do jediného čistého modelu s polem verifiedData a zdrojem.",
+      "targetLayer": "Project Package Táta má právo",
+      "targetModuleKey": "institutions.registry",
+      "dependencies": [
+        "PostgreSQL"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "STATIC_DATA_IMPORT_GATE",
+      "priority": "P1"
+    },
+    {
+      "id": "CAP-MRG-004",
+      "sourceCapability": "Koncepty formulářů a návrhů podání",
+      "sourceFiles": [
+        "prisma/schema.prisma (CaseSubmissionDraft, FormSubmission)"
+      ],
+      "classification": "SLOUČIT",
+      "reason": "Sloučit generování konceptů podání a obecných formulářů do jednotného systému SubmissionDraft.",
+      "targetLayer": "Můj případ",
+      "targetModuleKey": "case.drafts",
+      "dependencies": [
+        "PostgreSQL"
+      ],
+      "sensitiveData": true,
+      "migrationGate": "SEPARATE_SECURITY_LEGAL_MIGRATION_GATE_REQUIRED",
+      "priority": "P1"
+    },
+    {
+      "id": "CAP-DEF-001",
+      "sourceCapability": "Multi-AI Consensus Orchestrátor (Grok, Groq, Gemini)",
+      "sourceFiles": [
+        "src/services/qa/ai/synthesisMultiAIOrchestrator.ts",
+        "src/services/qa/ai/consensusEngine.ts",
+        "src/services/qa/ai/providers/*"
+      ],
+      "classification": "ODLOŽIT",
+      "reason": "Vysoce komplexní orchestrace 3 AI modelů a konsenzuální hlasování. Není nutná pro základní spuštění nového jádra; odložit na pozdější fázi.",
+      "targetLayer": "Synthesis OS",
+      "targetModuleKey": "ai.consensus",
+      "dependencies": [
+        "AI Providers API Keys"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P3"
+    },
+    {
+      "id": "CAP-DEF-002",
+      "sourceCapability": "Orion Visual Trace Center & Mind Map",
+      "sourceFiles": [
+        "src/components/admin/orion/OrionTraceCenterPage.tsx",
+        "src/components/admin/orion/OrionTraceMindMap.tsx",
+        "src/components/admin/orion/OrionTraceDetailDrawer.tsx"
+      ],
+      "classification": "ODLOŽIT",
+      "reason": "Pokročilá vizualizace trasování myšlenkových pochodů Oriona. Hodnotné, ale není kritické pro F1/F2.",
+      "targetLayer": "Synthesis Administrace",
+      "targetModuleKey": "orion.telemetry",
+      "dependencies": [
+        "Synthesis OS Orion"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P3"
+    },
+    {
+      "id": "CAP-DEF-003",
+      "sourceCapability": "Puck blokový vizuální CMS editor",
+      "sourceFiles": [
+        "src/puck/*",
+        "src/PuckEditorView.tsx",
+        "src/components/builder/puck.config.tsx"
+      ],
+      "classification": "ODLOŽIT",
+      "reason": "Integrovat až po stabilizaci datového modelu stránek a šablon v Next.js.",
+      "targetLayer": "Synthesis CMS",
+      "targetModuleKey": "cms.page-builder",
+      "dependencies": [
+        "Puck Editor",
+        "React"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P2"
+    },
+    {
+      "id": "CAP-DEF-004",
+      "sourceCapability": "Veřejné komunitní diskuzní fórum",
+      "sourceFiles": [
+        "src/components/public/community/ForumView.tsx",
+        "src/routes/forumRoutes.ts",
+        "prisma/schema.prisma (ForumThread, ForumPost)"
+      ],
+      "classification": "ODLOŽIT",
+      "reason": "Diskuze vyžaduje nepřetržitou moderaci a právní ochranu. Prioritou je pomoc v tísni, kalkulačka a spis klienta. Fórum odložit.",
+      "targetLayer": "Project Package Táta má právo",
+      "targetModuleKey": "community.forum",
+      "dependencies": [
+        "PostgreSQL"
+      ],
+      "sensitiveData": true,
+      "migrationGate": "SEPARATE_SECURITY_LEGAL_MIGRATION_GATE_REQUIRED",
+      "priority": "P3"
+    },
+    {
+      "id": "CAP-DEF-005",
+      "sourceCapability": "Dynamický zásuvný modulární systém (CustomModule)",
+      "sourceFiles": [
+        "src/core/moduleEngine.ts",
+        "src/components/admin/CustomModuleManager.tsx",
+        "prisma/schema.prisma (CustomModule, ModuleSetting)"
+      ],
+      "classification": "PŘEPSAT",
+      "reason": "Základní modulární systém Nového začátku (Module Contract, Manifest, Registry, Dependency Resolver, Cycle Detection, Lifecycle install/enable/disable/uninstall, Route/API Module Gates, Deklarované závislosti, Fallback při vypnutí a Boundary/Forbidden-import testy). Povinný základ F1 před zahájením stavby doménových funkcí.",
+      "targetLayer": "Synthesis OS / Module Engine",
+      "targetModuleKey": "platform.module-engine",
+      "dependencies": [
+        "TypeScript",
+        "NestJS",
+        "Next.js"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-REM-001",
+      "sourceCapability": "Monolitický server.ts (5 584 řádků)",
+      "sourceFiles": [
+        "server.ts"
+      ],
+      "classification": "VYŘADIT",
+      "reason": "Masivní monolit míchající Express routy, DB dotazy, static serving, VPS management a middleware. Zcela nepřenositelné.",
+      "targetLayer": "VYŘAZENO",
+      "targetModuleKey": "legacy.monolith",
+      "dependencies": [],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-REM-002",
+      "sourceCapability": "Fallback dbStore.ts (177 KB in-memory/JSON)",
+      "sourceFiles": [
+        "src/services/dbStore.ts"
+      ],
+      "classification": "VYŘADIT",
+      "reason": "Paralelní datové úložiště fungující vedle Prismy. Způsobuje split-brain, nekonzistenci a obcházení autorizačních pravidel.",
+      "targetLayer": "VYŘAZENO",
+      "targetModuleKey": "legacy.db-store",
+      "dependencies": [],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-REM-003",
+      "sourceCapability": "Přímé ovládání VPS z webového UI",
+      "sourceFiles": [
+        "src/components/admin/VpsManagement.tsx",
+        "src/routes/adminVpsRoutes.ts",
+        "src/services/audit/vpsDiagnosticBridge.ts"
+      ],
+      "classification": "VYŘADIT",
+      "reason": "Bezpečnostní riziko P0 (možnost RCE, spouštění systémových příkazů z UI administrace). Správa serveru patří do SSH / CI/CD.",
+      "targetLayer": "VYŘAZENO",
+      "targetModuleKey": "legacy.vps-exec",
+      "dependencies": [],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-REM-004",
+      "sourceCapability": "Ad-hoc kořenové skripty a patche",
+      "sourceFiles": [
+        "fix_brace.cjs",
+        "fix-divergence.cjs",
+        "patch_ui.cjs",
+        "fix_mycase_sync.cjs",
+        "auto-sync-main.sh",
+        "deploy.sh"
+      ],
+      "classification": "VYŘADIT",
+      "reason": "Jednoúčelové provizorní opravné skripty z historického vývoje DEV3. V čisté architektuře jsou nepřípustné.",
+      "targetLayer": "VYŘAZENO",
+      "targetModuleKey": "legacy.scripts",
+      "dependencies": [],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-REM-005",
+      "sourceCapability": "Jednoúčelové ad-hoc testovací skripty v kořeni",
+      "sourceFiles": [
+        "test-jwt.js",
+        "test-status.cjs",
+        "test-github-status.cjs",
+        "test-orion-deep.cjs"
+      ],
+      "classification": "VYŘADIT",
+      "reason": "Nekonstruované skripty mimo standardní testovací framework (Vitest/Jest).",
+      "targetLayer": "VYŘAZENO",
+      "targetModuleKey": "legacy.ad-hoc-tests",
+      "dependencies": [],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P1"
+    },
+    {
+      "id": "CAP-REM-006",
+      "sourceCapability": "Custom history state router v App.tsx",
+      "sourceFiles": [
+        "src/App.tsx (getViewFromPath, popstate handler)"
+      ],
+      "classification": "VYŘADIT",
+      "reason": "Provizorní klientské směrování přes window.history bez standardní navigace. Nahrazeno nativním Next.js App Routerem.",
+      "targetLayer": "VYŘAZENO",
+      "targetModuleKey": "legacy.custom-router",
+      "dependencies": [],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-REM-007",
+      "sourceCapability": "Neschválené AI fonty a barevné gradienty",
+      "sourceFiles": [
+        "public/fonts/playfair-display-*",
+        "public/fonts/plus-jakarta-sans-*"
+      ],
+      "classification": "VYŘADIT",
+      "reason": "Oficiálně zrušeno v úkolu TMPR-NEWDEV-20260911-BRAND-001. Jediným autoritativním písmem je Inter Variable.",
+      "targetLayer": "VYŘAZENO",
+      "targetModuleKey": "legacy.unapproved-branding",
+      "dependencies": [],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P0"
+    },
+    {
+      "id": "CAP-REM-008",
+      "sourceCapability": "Experimentální neověřené pohledy",
+      "sourceFiles": [
+        "src/components/experimental/*"
+      ],
+      "classification": "VYŘADIT",
+      "reason": "Mrtvý kód a neaktivní pokusné prototypy.",
+      "targetLayer": "VYŘAZENO",
+      "targetModuleKey": "legacy.experimental",
+      "dependencies": [],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P2"
+    },
+    {
+      "id": "CAP-UND-001",
+      "sourceCapability": "Mailcow & Vercel DNS automatizace",
+      "sourceFiles": [
+        "src/services/mailcowService.ts",
+        "src/services/vercelDnsService.ts",
+        "src/controllers/dnsController.ts"
+      ],
+      "classification": "NEURČENO",
+      "reason": "Zda má být správa schránek (mailcow) a DNS (Vercel) integrovanou součástí administrace nového DEV, nebo spravována čistě na úrovni infrastruktury/DevOps.",
+      "targetLayer": "Worker",
+      "targetModuleKey": "infra.dns-mail",
+      "dependencies": [
+        "Mailcow API",
+        "Vercel API"
+      ],
+      "sensitiveData": false,
+      "migrationGate": "NONE",
+      "priority": "P3"
+    }
+  ],
+  "updatedAt": "2026-09-11T19:49:01.856Z",
+  "recoveryTaskId": "TMPR-NEWDEV-20260911-F0-002-R01"
+}
