@@ -297,4 +297,77 @@ export class ModuleRegistry implements IModuleRegistry {
     }
     record.state = state;
   }
+
+  /**
+   * Zcela odregistruje modul z registru:
+   * 1. Ověří existenci modulu v registru
+   * 2. Odstraní všechny jeho routy z route indexu
+   * 3. Smaže záznam modulu z registru
+   */
+  public unregister(moduleKey: string): void {
+    const record = this.records.get(moduleKey);
+    if (!record) {
+      throw new ModuleRegistryError(
+        "MODULE_NOT_REGISTERED",
+        "Cannot unregister module \x27" + moduleKey + "\x27: module is not registered in registry",
+        { moduleKey }
+      );
+    }
+    this.unregisterRoutes(moduleKey);
+    this.records.delete(moduleKey);
+  }
+
+  /**
+   * Odregistruje všechny deklarované routy daného modulu z route indexu.
+   */
+  public unregisterRoutes(moduleKey: string): void {
+    const record = this.records.get(moduleKey);
+    if (!record) {
+      throw new ModuleRegistryError(
+        "MODULE_NOT_REGISTERED",
+        "Cannot unregister routes for module \x27" + moduleKey + "\x27: module is not registered in registry",
+        { moduleKey }
+      );
+    }
+    for (const route of record.manifest.routes) {
+      const routeKey = `${route.surface}:${route.path}`;
+      if (this.routeIndex.get(routeKey) === moduleKey) {
+        this.routeIndex.delete(routeKey);
+      }
+    }
+  }
+
+  /**
+   * Znovu zaregistruje deklarované routy modulu do route indexu.
+   * Kontroluje případné kolize s jinými moduly.
+   */
+  public registerRoutes(moduleKey: string): void {
+    const record = this.records.get(moduleKey);
+    if (!record) {
+      throw new ModuleRegistryError(
+        "MODULE_NOT_REGISTERED",
+        "Cannot register routes for module \x27" + moduleKey + "\x27: module is not registered in registry",
+        { moduleKey }
+      );
+    }
+    for (const route of record.manifest.routes) {
+      const routeKey = `${route.surface}:${route.path}`;
+      const existingOwner = this.routeIndex.get(routeKey);
+      if (existingOwner && existingOwner !== moduleKey) {
+        throw new ModuleRegistryError(
+          "ROUTE_CONFLICT",
+          "Route \x27" + route.path + "\x27 on surface \x27" + route.surface + "\x27 declared by module \x27" + moduleKey + "\x27 is already owned by module \x27" + existingOwner + "\x27",
+          {
+            moduleKey,
+            details: {
+              surface: route.surface,
+              path: route.path,
+              existingOwner,
+            },
+          }
+        );
+      }
+      this.routeIndex.set(routeKey, moduleKey);
+    }
+  }
 }

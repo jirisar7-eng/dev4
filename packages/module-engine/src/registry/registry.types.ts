@@ -121,4 +121,19 @@ export interface IModuleRegistry {
    * Jediná autoritativní cesta pro změnu stavu v registru.
    */
   recordState(moduleKey: string, state: ModuleLifecycleState): void;
+
+  /**
+   * Zcela odregistruje modul z registru včetně smazání všech jeho rout z indexu.
+   */
+  unregister(moduleKey: string): void;
+
+  /**
+   * Odregistruje všechny deklarované routy daného modulu z route indexu.
+   */
+  unregisterRoutes(moduleKey: string): void;
+
+  /**
+   * Znovu zaregistruje deklarované routy modulu do route indexu.
+   */
+  registerRoutes(moduleKey: string): void;
 }

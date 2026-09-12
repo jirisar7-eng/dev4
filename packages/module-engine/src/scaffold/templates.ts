@@ -116,7 +116,7 @@ export const manifest: IModuleManifest = {
     conflicts: [],
   },
   lifecycle: {
-    supportedHooks: ["enable", "disable"],
+    supportedHooks: ["install", "enable", "disable", "uninstall"],
     requiresRestart: false,
     disableBehavior: {
       mode: "fail_closed",
@@ -359,6 +359,14 @@ export class InMemory${meta.pascalCase}Repository implements I${meta.pascalCase}
   public async listAll(): Promise<readonly ${meta.pascalCase}Entity[]> {
     return Object.freeze(Array.from(this.store.values()));
   }
+
+  public async clear(): Promise<void> {
+    this.store.clear();
+  }
+
+  public async count(): Promise<number> {
+    return this.store.size;
+  }
 }
 `;
 }
@@ -475,6 +483,15 @@ export function renderRootIndexTs(meta: ResolvedScaffoldMetadata): string {
  * @description Hlavní vstupní bod modulu '${meta.name}'.
  */
 
+import type {
+  IModule,
+  IModuleLifecycleContext,
+  IModuleHealthResult,
+} from "@tmpr/module-engine/contract";
+import { manifest } from "./manifest.js";
+import { ${meta.pascalCase}DomainService } from "./domain/service.js";
+import { InMemory${meta.pascalCase}Repository } from "./data/repository.js";
+
 export { manifest } from "./manifest.js";
 export * from "./contract.js";
 export * from "./domain/index.js";
@@ -482,6 +499,57 @@ export * from "./data/index.js";
 export * from "./api/index.js";
 export * from "./public/index.js";
 export * from "./admin/index.js";
+
+/**
+ * Autoritativní runtime instance modulu '${meta.name}' implementující IModule.
+ */
+export class ${meta.pascalCase}Module implements IModule {
+  public readonly manifest = manifest;
+  public readonly repository = new InMemory${meta.pascalCase}Repository();
+  public readonly domainService = new ${meta.pascalCase}DomainService();
+  public isInstalled = false;
+  public isEnabled = false;
+
+  public async onInstall(context: IModuleLifecycleContext): Promise<void> {
+    this.isInstalled = true;
+    context.logger.info(\`Module ${meta.moduleKey} installed successfully\`);
+  }
+
+  public async onEnable(context: IModuleLifecycleContext): Promise<void> {
+    this.isEnabled = true;
+    context.logger.info(\`Module ${meta.moduleKey} enabled successfully\`);
+  }
+
+  public async onDisable(context: IModuleLifecycleContext): Promise<void> {
+    this.isEnabled = false;
+    context.logger.info(\`Module ${meta.moduleKey} disabled successfully\`);
+  }
+
+  public async onUninstall(context: IModuleLifecycleContext): Promise<void> {
+    this.isInstalled = false;
+    this.isEnabled = false;
+    await this.repository.clear();
+    context.logger.info(\`Module ${meta.moduleKey} uninstalled and data cleared\`);
+  }
+
+  public async onHealthCheck(_context: IModuleLifecycleContext): Promise<IModuleHealthResult> {
+    return {
+      status: this.isEnabled ? "healthy" : "degraded",
+      checkedAt: new Date().toISOString(),
+      details: {
+        isInstalled: this.isInstalled,
+        isEnabled: this.isEnabled,
+      },
+    };
+  }
+}
+
+/**
+ * Tovární funkce pro vytvoření nové instance modulu.
+ */
+export function create${meta.pascalCase}Module(): ${meta.pascalCase}Module {
+  return new ${meta.pascalCase}Module();
+}
 `;
 }
 
