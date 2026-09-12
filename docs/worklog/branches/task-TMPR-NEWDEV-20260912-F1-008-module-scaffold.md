@@ -8,7 +8,7 @@
 **BASE BRANCH:** main  
 **BASE COMMIT:** 481140a28f8f985217ba842ce95d1bf2bac5b1e2  
 **WORK BRANCH:** task/TMPR-NEWDEV-20260912-F1-008-module-scaffold  
-**STATUS:** COMPLETE  
+**STATUS:** LOCAL_PASS  
 
 ## IN SCOPE:
 - Deterministický generátor doménového modulu v `@tmpr/module-engine` (`packages/module-engine/src/scaffold/`)
