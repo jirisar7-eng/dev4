@@ -191,18 +191,18 @@ class InternalModuleRegistry implements IMutableModuleRegistry {
  * Sama o sobě fyzicky neobsahuje mutační metody.
  */
 export class ModuleRegistry implements IModuleRegistry {
-  private readonly internal: InternalModuleRegistry;
+  readonly #internal: InternalModuleRegistry;
 
   constructor(options?: ModuleRegistryOptions) {
-    this.internal = new InternalModuleRegistry(options);
-    registryMutators.set(this, this.internal);
+    this.#internal = new InternalModuleRegistry(options);
+    registryMutators.set(this, this.#internal);
   }
 
-  public register(module: IModule): void { this.internal.register(module); }
-  public get(moduleKey: string): IModule | undefined { return this.internal.get(moduleKey); }
-  public list(): readonly IModule[] { return this.internal.list(); }
-  public has(moduleKey: string): boolean { return this.internal.has(moduleKey); }
-  public getRecord(moduleKey: string): IModuleRegistryRecord | undefined { return this.internal.getRecord(moduleKey); }
-  public listRecords(): readonly IModuleRegistryRecord[] { return this.internal.listRecords(); }
-  public getRouteOwner(surface: string, path: string): string | undefined { return this.internal.getRouteOwner(surface, path); }
+  public register(module: IModule): void { this.#internal.register(module); }
+  public get(moduleKey: string): IModule | undefined { return this.#internal.get(moduleKey); }
+  public list(): readonly IModule[] { return this.#internal.list(); }
+  public has(moduleKey: string): boolean { return this.#internal.has(moduleKey); }
+  public getRecord(moduleKey: string): IModuleRegistryRecord | undefined { return this.#internal.getRecord(moduleKey); }
+  public listRecords(): readonly IModuleRegistryRecord[] { return this.#internal.listRecords(); }
+  public getRouteOwner(surface: string, path: string): string | undefined { return this.#internal.getRouteOwner(surface, path); }
 }

@@ -264,6 +264,40 @@ export const ruleForbiddenDependencies: BoundaryRule = {
 /**
  * Kompletní sada výchozích architektonických pravidel.
  */
+
+/**
+ * ERR-ARCH-009: Module Engine Internal Mutation Import - Zamezuje obcházení mutability boundary modulu module-engine zvenčí.
+ */
+export const ruleModuleEngineInternalMutation: BoundaryRule = {
+  id: "ERR-ARCH-009",
+  name: "Module Engine Internal Mutation Import",
+  description:
+    "Zabraňuje všem komponentám mimo packages/module-engine importovat interní registry modulů.",
+  check(source, target, importInfo): RuleViolation | null {
+    if (source.unit === "packages/module-engine") {
+      return null;
+    }
+
+    const isInternalTarget = 
+      target.specifier.includes("module-engine/registry/registry.internal") ||
+      target.specifier.includes("module-engine/src/registry/registry.internal");
+
+    if (isInternalTarget) {
+      return {
+        ruleId: "ERR-ARCH-009",
+        ruleName: "Module Engine Internal Mutation Import",
+        message: `Závažné porušení zapouzdření: '${source.unit}' nesmí importovat mutační registry '${target.specifier}'.`,
+        source,
+        target,
+        importType: importInfo.type,
+        suggestion:
+          "Závislost na vnitřní paměti engine modulu je nebezpečná a nesmí být použita mimo packages/module-engine.",
+      };
+    }
+    return null;
+  },
+};
+
 export const DEFAULT_BOUNDARY_RULES: BoundaryRule[] = [
   ruleSynthesisOsInversion,
   ruleSynthesisCmsInversion,
@@ -271,4 +305,5 @@ export const DEFAULT_BOUNDARY_RULES: BoundaryRule[] = [
   ruleModuleEncapsulation,
   ruleClientAppDirectDb,
   ruleForbiddenDependencies,
+  ruleModuleEngineInternalMutation,
 ];

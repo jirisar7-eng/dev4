@@ -292,6 +292,30 @@ describe("Architecture Boundary Gate Tests (NEWDEV-15)", () => {
   });
 
   // Test 10: současný DEV4 musí celý PASS
+
+  describe("Test 11: ERR-ARCH-009 Module Engine Internal Mutation", () => {
+    it("Zakazuje package import `@tmpr/module-engine/registry/registry.internal` mimo module-engine", () => {
+      const code = `import { registryMutators } from "@tmpr/module-engine/registry/registry.internal.js";`;
+      const result = validateSourceCode(code, "packages/synthesis-cms/src/loader.ts");
+      assert.equal(result.violations.length, 1);
+      assert.equal(result.violations[0]!.ruleId, "ERR-ARCH-009");
+    });
+
+    it("Zakazuje relative import z domain modulu", () => {
+      const code = `import { internal } from "../../../../packages/module-engine/src/registry/registry.internal";`;
+      const result = validateSourceCode(code, "modules/family-alimony/src/calc.ts");
+      assert.equal(result.violations.length, 1);
+      assert.equal(result.violations[0]!.ruleId, "ERR-ARCH-009");
+    });
+
+    it("Povoluje internal import UVNITŘ module-engine", () => {
+      const code = `import { registryMutators } from "../registry/registry.internal.js";`;
+      const result = validateSourceCode(code, "packages/module-engine/src/lifecycle/lifecycle.engine.ts");
+      // ERR-ARCH-009 by se nemělo triggerovat (výsledek bude 0 violations, protože OS-level import vlastních věcí je povolen)
+      assert.equal(result.violations.length, 0);
+    });
+  });
+
   describe("Test 10: Současný DEV4 workspace musí celý PASS", () => {
     it("Kompletní scan existujících packages/*, modules/*, apps/* v DEV4 má 0 porušení", () => {
       const workspaceRoot = findWorkspaceRoot(import.meta.dirname);

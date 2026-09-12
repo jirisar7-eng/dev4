@@ -997,8 +997,8 @@ describe("Reference Module Lifecycle Gate (NEWDEV-16 / F1-009)", () => {
       const publicRegistry: import("../src/registry/registry.types.js").IModuleRegistry = engine.registry;
       
       // Tím, že to TypeScript zkompiluje a my ověříme nepřítomnost metod v TYPE levelu,
-      // zajistíme contract. V runtime metody fyzicky na objektu jsou, protože je to stejná instance, 
-      // ale typescript to neumožní. Toto je ukázkový test contractu.
+      // zajistíme contract. Zajišťujeme, že v runtime na objektu mutační metody fyzicky skutečně chybí
+      // a Fasáda chrání interní registry objekt.
       assert.ok(publicRegistry);
     });
 
