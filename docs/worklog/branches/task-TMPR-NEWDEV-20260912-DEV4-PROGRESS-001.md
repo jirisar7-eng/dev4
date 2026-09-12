@@ -85,3 +85,20 @@ Commit `package.json` and this worklog checkpoint, then push to the existing tas
 ## Last Updated
 
 2026-09-12
+
+## WORKLOG CHECKPOINT — preview runtime recovery
+
+- First root preview command failed because forwarded `-- --hostname 0.0.0.0` was interpreted by Next.js as a project directory.
+- Root `dev` script corrected to `pnpm --filter @synthesis/public dev`.
+- Runtime verification: Next.js 15.5.25 started successfully.
+- Result: `Ready in 1727ms`.
+- Test server was intentionally stopped with Ctrl+C.
+- `.next/` and `next-env.d.ts` identified as generated runtime artifacts and added to `.gitignore`.
+
+## EXACT NEXT STEP
+
+Commit and push the verified preview-runtime recovery, then start DEV4 persistently and verify HTTP on localhost:3004.
+
+## Last Updated
+
+2026-09-12

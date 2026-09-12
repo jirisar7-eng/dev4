@@ -9,3 +9,7 @@ coverage/
 .env.*.local
 dist-test/
 .turbo/
+
+# Next.js generated
+.next/
+next-env.d.ts

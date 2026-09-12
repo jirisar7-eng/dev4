@@ -14,7 +14,7 @@
     "typecheck": "turbo run typecheck",
     "test:boundaries": "pnpm --filter @tmpr/boundary-gate build && node packages/boundary-gate/dist/cli.js",
     "scaffold:module": "pnpm --filter @tmpr/module-engine build && node packages/module-engine/dist/scaffold/cli.js",
-    "dev": "pnpm --filter @synthesis/public dev -- --hostname 0.0.0.0",
+    "dev": "pnpm --filter @synthesis/public dev",
     "start": "pnpm --filter @synthesis/public start"
   },
   "devDependencies": {
