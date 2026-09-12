@@ -45,7 +45,7 @@ export const ModuleKeySchema = z
   .string()
   .regex(
     NAMESPACED_MODULE_KEY_REGEX,
-    "moduleKey must be namespaced lowercase with dot notation (e.g. family.alimony or platform.module-engine)"
+    "Klíč modulu (moduleKey) musí mít formát jmenného prostoru s tečkovou notací a malými písmeny (např. family.alimony nebo platform.module-engine)"
   );
 
 export const SemverVersionSchema = z
@@ -54,7 +54,7 @@ export const SemverVersionSchema = z
     (val) => isValidSemver(val),
     {
       message:
-        "version must be a strict valid SemVer string without 'v' prefix (e.g. 1.0.0, 1.2.3-beta.1, 1.2.3+build.5)"
+        "Verze (version) musí být striktní platný SemVer řetězec bez prefixu 'v' (např. 1.0.0, 1.2.3-beta.1, 1.2.3+build.5)"
     }
   );
 
@@ -64,7 +64,7 @@ export const SemverRangeSchema = z
     (val) => isValidSemverRange(val),
     {
       message:
-        "versionRange must be a valid SemVer range (e.g. *, ^1.0.0, ~1.2.0, >=1.0.0 <2.0.0)"
+        "Rozsah verzí (versionRange) musí být platný SemVer rozsah (např. *, ^1.0.0, ~1.2.0, >=1.0.0 <2.0.0)"
     }
   );
 
@@ -82,7 +82,7 @@ export const ModuleDependencySchema = z.object({
  */
 export const ModuleConflictSchema = z.object({
   moduleKey: ModuleKeySchema,
-  reason: z.string().min(1, "Reason for conflict must be provided")
+  reason: z.string().min(1, "Důvod konfliktu (reason) musí být zadán")
 });
 
 /**
@@ -138,16 +138,16 @@ export const ModuleSurfacesSchema = z
         account: UiSurfaceItemSchema.optional(),
         admin: UiSurfaceItemSchema.optional()
       })
-      .strict("Unknown UI surface specified; allowed surfaces are public, account, admin")
+      .strict("Zadána neznámá UI surface; povolené surfaces jsou public, account, admin")
       .default({})
   })
-  .strict("Unknown surface category specified; only api and ui surfaces are allowed");
+  .strict("Zadána neznámá kategorie surface; povoleny jsou pouze api a ui");
 
 /**
  * Schéma cesty / routy modulu.
  */
 export const ModuleRouteSchema = z.object({
-  path: z.string().min(1, "Route path must not be empty"),
+  path: z.string().min(1, "Cesta routy (path) nesmí být prázdná"),
   surface: z.enum(["public", "account", "admin", "api"]),
   requiresAuth: z.boolean().default(false),
   permission: z.string().optional()
@@ -157,9 +157,9 @@ export const ModuleRouteSchema = z.object({
  * Schéma oprávnění modulu.
  */
 export const ModulePermissionSchema = z.object({
-  key: z.string().min(1, "Permission key must not be empty"),
-  name: z.string().min(1, "Permission name must not be empty"),
-  description: z.string().min(1, "Permission description must not be empty"),
+  key: z.string().min(1, "Klíč oprávnění (key) nesmí být prázdný"),
+  name: z.string().min(1, "Název oprávnění (name) nesmí být prázdný"),
+  description: z.string().min(1, "Popis oprávnění (description) nesmí být prázdný"),
   defaultRoles: z.array(z.string()).default([])
 });
 
@@ -193,8 +193,8 @@ export const ModuleEventsSchema = z.object({
  * Schéma asynchronních úloh modulu (PostgreSQL-backed queue).
  */
 export const ModuleJobSchema = z.object({
-  jobKey: z.string().min(1, "jobKey must not be empty"),
-  description: z.string().min(1, "Job description must not be empty"),
+  jobKey: z.string().min(1, "Klíč úlohy (jobKey) nesmí být prázdný"),
+  description: z.string().min(1, "Popis úlohy (description) nesmí být prázdný"),
   schedule: z.string().optional(),
   queueType: z.literal("postgres_queue").default("postgres_queue"),
   retryLimit: z.number().int().nonnegative().default(3)
@@ -249,15 +249,15 @@ export const ModuleFallbackSchema = z.object({
 export const ModuleManifestSchema = z
   .object({
     moduleKey: ModuleKeySchema,
-    name: z.string().min(1, "Module name is required"),
-    description: z.string().min(1, "Module description is required"),
+    name: z.string().min(1, "Název modulu (name) je povinný"),
+    description: z.string().min(1, "Popis modulu (description) je povinný"),
     version: SemverVersionSchema,
     compatibility: z.object({
       synthesisCore: SemverRangeSchema,
       synthesisCms: z
         .string()
         .refine((val) => isValidSemverRange(val), {
-          message: "synthesisCms must be a valid SemVer range if specified"
+          message: "synthesisCms musí být platný SemVer rozsah, pokud je zadán"
         })
         .optional()
     }),
@@ -309,7 +309,7 @@ export const ModuleManifestSchema = z
     if (selfRequired) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Module '" + moduleKey + "' cannot depend on itself in required dependencies",
+        message: "Modul '" + moduleKey + "' nemůže záviset sám na sobě v povinných závislostech (required)",
         path: ["dependencies", "required"]
       });
     }
@@ -319,7 +319,7 @@ export const ModuleManifestSchema = z
     if (selfOptional) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Module '" + moduleKey + "' cannot depend on itself in optional dependencies",
+        message: "Modul '" + moduleKey + "' nemůže záviset sám na sobě ve volitelných závislostech (optional)",
         path: ["dependencies", "optional"]
       });
     }
@@ -329,7 +329,7 @@ export const ModuleManifestSchema = z
     if (selfConflict) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Module '" + moduleKey + "' cannot declare conflict with itself",
+        message: "Modul '" + moduleKey + "' nemůže deklarovat konflikt sám se sebou",
         path: ["dependencies", "conflicts"]
       });
     }
@@ -340,7 +340,7 @@ export const ModuleManifestSchema = z
       if (requiredKeys.has(dep.moduleKey)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Duplicate dependency '" + dep.moduleKey + "' in required dependencies",
+          message: "Duplicitní závislost '" + dep.moduleKey + "' v povinných závislostech (required)",
           path: ["dependencies", "required"]
         });
       }
@@ -353,7 +353,7 @@ export const ModuleManifestSchema = z
       if (optionalKeys.has(dep.moduleKey)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Duplicate dependency '" + dep.moduleKey + "' in optional dependencies",
+          message: "Duplicitní závislost '" + dep.moduleKey + "' ve volitelných závislostech (optional)",
           path: ["dependencies", "optional"]
         });
       }
@@ -365,7 +365,7 @@ export const ModuleManifestSchema = z
       if (optionalKeys.has(reqKey)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Dependency '" + reqKey + "' cannot be both required and optional",
+          message: "Závislost '" + reqKey + "' nemůže být současně povinná (required) i volitelná (optional)",
           path: ["dependencies"]
         });
       }
