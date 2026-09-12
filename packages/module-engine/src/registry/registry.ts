@@ -18,7 +18,7 @@ import { isValidSemver } from "../contract/manifest.schema.js";
 import type { IModule, IModuleManifest, ModuleLifecycleState } from "../contract/types.js";
 import type {
   DeepReadonly,
-  IModuleRegistry,
+  IMutableModuleRegistry,
   IModuleRegistryRecord,
   ModuleRegistryOptions
 } from "./registry.types.js";
@@ -39,7 +39,7 @@ interface InternalModuleRegistryRecord {
   readonly registeredAt: string;
 }
 
-export class ModuleRegistry implements IModuleRegistry {
+export class ModuleRegistry implements IMutableModuleRegistry {
   private readonly options: ModuleRegistryOptions;
   private readonly records = new Map<string, InternalModuleRegistryRecord>();
   private readonly routeIndex = new Map<string, string>(); // `${surface}:${path}` -> moduleKey

@@ -115,25 +115,14 @@ export interface IModuleRegistry {
    * Vrátí moduleKey modulu, který vlastní danou kombinaci surface a path.
    */
   getRouteOwner(surface: string, path: string): string | undefined;
+}
 
-  /**
-   * Zaznamená aktualizaci stavu životního cyklu modulu (bez spouštění hooků).
-   * Jediná autoritativní cesta pro změnu stavu v registru.
-   */
+/**
+ * Interní rozhraní pro mutaci registru. Nesmí být použito z klientského kódu.
+ */
+export interface IMutableModuleRegistry extends IModuleRegistry {
   recordState(moduleKey: string, state: ModuleLifecycleState): void;
-
-  /**
-   * Zcela odregistruje modul z registru včetně smazání všech jeho rout z indexu.
-   */
   unregister(moduleKey: string): void;
-
-  /**
-   * Odregistruje všechny deklarované routy daného modulu z route indexu.
-   */
   unregisterRoutes(moduleKey: string): void;
-
-  /**
-   * Znovu zaregistruje deklarované routy modulu do route indexu.
-   */
   registerRoutes(moduleKey: string): void;
 }

@@ -17,6 +17,7 @@ import type {
 } from "../contract/types.js";
 import type {
   IModuleRegistry,
+  IMutableModuleRegistry,
   IModuleRegistryRecord,
 } from "../registry/registry.types.js";
 import type { IDependencyResolver } from "../dependencies/dependency.types.js";
@@ -39,9 +40,9 @@ const ALLOWED_PREVIOUS_STATES: Record<
   ModuleLifecycleTransition,
   readonly ModuleLifecycleState[]
 > = {
-  install: ["uninstalled", "failed"],
-  enable: ["installed", "disabled", "failed"],
-  disable: ["enabled", "failed"],
+  install: ["uninstalled"],
+  enable: ["installed", "disabled"],
+  disable: ["enabled"],
   uninstall: ["installed", "disabled", "enabled", "failed"],
 };
 
@@ -67,17 +68,19 @@ function createDefaultLogger(): IModuleLifecycleContext["logger"] {
 }
 
 export class ModuleLifecycleEngine implements IModuleLifecycleEngine {
+  private readonly mutableRegistry: IMutableModuleRegistry;
   public readonly registry: IModuleRegistry;
   public readonly resolver: IDependencyResolver;
   public readonly gate: IModuleGate;
   private readonly options: ModuleLifecycleEngineOptions;
 
   constructor(
-    registry: IModuleRegistry,
+    registry: IMutableModuleRegistry,
     resolver?: IDependencyResolver,
     gate?: IModuleGate,
     options?: ModuleLifecycleEngineOptions
   ) {
+    this.mutableRegistry = registry;
     this.registry = registry;
     this.resolver = resolver ?? new DependencyResolver(registry);
     this.gate = gate ?? new ModuleGate(this.registry, this.resolver);
@@ -106,12 +109,6 @@ export class ModuleLifecycleEngine implements IModuleLifecycleEngine {
     return this.registry.getRecord(moduleKey);
   }
 
-  /**
-   * Zcela odregistruje modul z registru včetně smazání jeho rout.
-   */
-  public unregister(moduleKey: string): void {
-    this.registry.unregister(moduleKey);
-  }
 
   /**
    * Provede inicializační instalaci modulu.
@@ -197,9 +194,9 @@ export class ModuleLifecycleEngine implements IModuleLifecycleEngine {
     // 3. Kontrola závislostí podle typu přechodu
     if (transition === "enable") {
       this.validateEnableDependencies(moduleKey);
-    } else if (transition === "disable" && !options?.force) {
+    } else if (transition === "disable") {
       this.validateDisableDependentModules(moduleKey);
-    } else if (transition === "uninstall" && !options?.force) {
+    } else if (transition === "uninstall") {
       this.validateUninstallDependentModules(moduleKey);
     }
 
@@ -222,7 +219,7 @@ export class ModuleLifecycleEngine implements IModuleLifecycleEngine {
         }
       } catch (err) {
         // Selhání onDisable při uninstall zanechá modul ve stavu 'failed'
-        this.registry.recordState(moduleKey, "failed");
+        this.mutableRegistry.recordState(moduleKey, "failed");
         throw new ModuleLifecycleError(
           "HOOK_FAILED",
           `onDisable teardown hook failed during uninstall of module '${moduleKey}': ${err instanceof Error ? err.message : String(err)}`,
@@ -262,7 +259,7 @@ export class ModuleLifecycleEngine implements IModuleLifecycleEngine {
       }
     } catch (err) {
       // Selhání hooku: nastavíme autoritativní stav na 'failed', žádný falešný úspěšný stav!
-      this.registry.recordState(moduleKey, "failed");
+      this.mutableRegistry.recordState(moduleKey, "failed");
       throw new ModuleLifecycleError(
         "HOOK_FAILED",
         `Lifecycle hook for transition '${transition}' failed for module '${moduleKey}': ${err instanceof Error ? err.message : String(err)}`,
@@ -277,11 +274,11 @@ export class ModuleLifecycleEngine implements IModuleLifecycleEngine {
     }
 
     // 6. Úspěšné dokončení: záznam nového stavu do autoritativního registru
-    this.registry.recordState(moduleKey, targetState);
+    this.mutableRegistry.recordState(moduleKey, targetState);
 
     // 7. Volitelné kompletní vyřazení z registru při uninstall (žádné orphan registrace)
     if (transition === "uninstall" && options?.unregister === true) {
-      this.registry.unregister(moduleKey);
+      this.mutableRegistry.unregister(moduleKey);
     }
 
     return {

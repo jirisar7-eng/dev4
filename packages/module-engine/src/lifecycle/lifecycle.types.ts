@@ -33,11 +33,6 @@ export interface LifecycleTransitionOptions {
    */
   readonly logger?: IModuleLifecycleContext["logger"];
 
-  /**
-   * Vynucená deaktivace / odinstalace i v případě, že na modulu závisí jiné moduly.
-   * Výchozí: false (fail-closed, blokováno při existenci aktivních závislostí).
-   */
-  readonly force?: boolean;
 
   /**
    * Zda při odinstalaci provést také úplné vyřazení z registru (odstranění záznamu a rout).
@@ -168,8 +163,4 @@ export interface IModuleLifecycleEngine {
    */
   getRecord(moduleKey: string): IModuleRegistryRecord | undefined;
 
-  /**
-   * Odregistruje modul z registru a odstraní jeho routy.
-   */
-  unregister(moduleKey: string): void;
 }
