@@ -11,7 +11,8 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "test:boundaries": "pnpm --filter @tmpr/boundary-gate build && node packages/boundary-gate/dist/cli.js"
   },
   "devDependencies": {
     "turbo": "^2.4.4",

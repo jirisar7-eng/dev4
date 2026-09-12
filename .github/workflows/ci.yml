@@ -31,3 +31,6 @@ jobs:
 
       - name: Turbo Build, Typecheck & Test
         run: pnpm turbo run build typecheck test
+
+      - name: Architecture Boundary Gate
+        run: pnpm test:boundaries

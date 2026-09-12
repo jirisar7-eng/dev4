@@ -173,6 +173,16 @@ importers:
         specifier: ^5.8.2
         version: 5.9.3
 
+  packages/boundary-gate:
+    dependencies:
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+    devDependencies:
+      '@types/node':
+        specifier: ^22.13.9
+        version: 22.20.2
+
   packages/module-engine:
     dependencies:
       semver:

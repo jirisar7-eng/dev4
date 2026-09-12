@@ -4,6 +4,9 @@
   "references": [
     {
       "path": "./packages/module-engine"
+    },
+    {
+      "path": "./packages/boundary-gate"
     }
   ]
 }

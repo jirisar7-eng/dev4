@@ -1,0 +1,30 @@
+{
+  "name": "@tmpr/boundary-gate",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "boundary-gate": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:test": "tsc -p tsconfig.test.json",
+    "test": "tsc -p tsconfig.test.json && node --test dist-test/tests/**/*.test.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo \"@tmpr/boundary-gate: lint ok\""
+  },
+  "dependencies": {
+    "typescript": "^5.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9"
+  }
+}
