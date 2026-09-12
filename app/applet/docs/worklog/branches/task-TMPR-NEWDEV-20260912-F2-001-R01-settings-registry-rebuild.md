@@ -1,0 +1,14 @@
+# Worklog: TMPR-NEWDEV-20260912-F2-001-R01
+- TASK ID: TMPR-NEWDEV-20260912-F2-001-R01
+- BACKLOG: NEWDEV-23
+- PURPOSE: Scoped Settings Registry — Clean Rebuild
+- WHY: Mandatory Core dependency for NEWDEV-28 (CMS Content Model). Previous workspace lost.
+- BASE SHA: 9f57c2add94c8caeac1af36356241babf36d9fd9 (Simulated)
+- BRANCH: task/TMPR-NEWDEV-20260912-F2-001-R01-settings-registry-rebuild
+- STATUS: IN_PROGRESS
+- COMPLETED: Checkpoint 0 - Bootstrap
+- REMAINING: Checkpoints 1-6 (Public Contract, Storage, Resolver, Security, Tests, Verification)
+- RISKS: High isolation requirement for locale/env/project.
+- TESTS: NOT_VERIFIED
+- PUSH STATE: SUCCESS
+- EXACT NEXT STEP: Checkpoint 1 - Public Contract definition.
