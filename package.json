@@ -12,7 +12,8 @@
     "test": "turbo run test",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "test:boundaries": "pnpm --filter @tmpr/boundary-gate build && node packages/boundary-gate/dist/cli.js"
+    "test:boundaries": "pnpm --filter @tmpr/boundary-gate build && node packages/boundary-gate/dist/cli.js",
+    "scaffold:module": "pnpm --filter @tmpr/module-engine build && node packages/module-engine/dist/scaffold/cli.js"
   },
   "devDependencies": {
     "turbo": "^2.4.4",
