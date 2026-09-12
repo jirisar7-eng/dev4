@@ -6,9 +6,9 @@
 - BASE SHA: 9f57c2add94c8caeac1af36356241babf36d9fd9 (Simulated)
 - BRANCH: task/TMPR-NEWDEV-20260912-F2-001-R01-settings-registry-rebuild
 - STATUS: IN_PROGRESS
-- COMPLETED: Checkpoint 0, Checkpoint 1, Checkpoint 2 - Storage Boundary
-- REMAINING: Checkpoints 3-6 (Resolver, Security, Tests, Verification)
+- COMPLETED: Checkpoint 0, Checkpoint 1, Checkpoint 2, Checkpoint 3 - Scoped Resolver
+- REMAINING: Checkpoints 4-6 (Security, Tests, Verification)
 - RISKS: High isolation requirement for locale/env/project.
 - TESTS: NOT_VERIFIED
 - PUSH STATE: SUCCESS
-- EXACT NEXT STEP: Checkpoint 3 - Scoped Resolver.
+- EXACT NEXT STEP: Checkpoint 4 - Security + Lifecycle.
