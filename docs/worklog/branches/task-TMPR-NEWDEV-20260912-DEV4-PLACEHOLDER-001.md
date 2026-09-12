@@ -10,15 +10,15 @@
   - Checkpoint 4 (Monorepo repair)
   - Checkpoints 5-6 (Initial verification)
   - Security review of pnpm 12 ERR_PNPM_IGNORED_BUILDS root cause
-  - Approved @tailwindcss/oxide@4.1.11 build script
-  - Approved unrs-resolver@1.12.2 build script
-  - Preserved fail-closed policy (dangerouslyAllowAllBuilds NOT enabled)
-  - Verified dependency installation (PASS, no ignored builds left)
+  - Approved @tailwindcss/oxide@4.1.11 and unrs-resolver@1.12.2 build scripts
+  - Verified dependency installation (PASS)
+  - Confirmed ESLint root cause: missing @eslint/eslintrc in apps/public/package.json
+  - Added @eslint/eslintrc@3.3.7 to apps/public/package.json (lint PASS)
 - RESULTS:
   - install: PASS
   - typecheck: PASS
-  - lint: FAIL (ESLint cannot find @eslint/eslintrc)
-  - build: FAIL (Next.js prerender error / Html outside _document)
+  - lint: PASS
+  - build: FAIL
   - tests: PASS (187/187)
   - test:boundaries: PASS
-- EXACT NEXT STEP: Independent review and repair of Next.js / ESLint regressions
+- EXACT NEXT STEP: Next.js build root-cause reproduction
