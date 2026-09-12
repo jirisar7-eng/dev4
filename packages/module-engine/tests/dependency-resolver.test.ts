@@ -660,4 +660,183 @@ describe("TMPR-NEWDEV-20260911-F1-004: Dependency Resolver & Cycle Detection", (
     assert.equal(res.blockers.length, 0);
     assert.equal(res.advisories.length, 0);
   });
+
+  // =========================================================================
+  // TMPR-NEWDEV-20260912-F1-004-R01: Polynomial Cycle Witness Hardening
+  // =========================================================================
+  describe("TMPR-NEWDEV-20260912-F1-004-R01: Polynomial Cycle Witness Hardening", () => {
+    // 1. self-loop: A -> A
+    it("R01-1. self-loop A -> A vrací [A, A]", () => {
+      const adj = new Map([["test.a", ["test.a"]]]);
+      const cycles = detectCycles(["test.a"], adj);
+      assert.deepEqual(cycles, [["test.a", "test.a"]]);
+    });
+
+    // 2. two-node cycle: A -> B -> A
+    it("R01-2. two-node cycle A -> B -> A vrací [A, B, A]", () => {
+      const adj = new Map([
+        ["test.a", ["test.b"]],
+        ["test.b", ["test.a"]]
+      ]);
+      const cycles = detectCycles(["test.a", "test.b"], adj);
+      assert.deepEqual(cycles, [["test.a", "test.b", "test.a"]]);
+    });
+
+    // 3. three-node cycle: A -> B -> C -> A
+    it("R01-3. three-node cycle A -> B -> C -> A vrací [A, B, C, A]", () => {
+      const adj = new Map([
+        ["test.a", ["test.b"]],
+        ["test.b", ["test.c"]],
+        ["test.c", ["test.a"]]
+      ]);
+      const cycles = detectCycles(["test.a", "test.b", "test.c"], adj);
+      assert.deepEqual(cycles, [["test.a", "test.b", "test.c", "test.a"]]);
+    });
+
+    // 4. více možných cycle witnesses: výsledek je vždy stejný (nejkratší cyklus)
+    it("R01-4. více možných cycle witnesses vrací deterministicky nejkratší witness", () => {
+      // SCC obsahuje cyklus délky 2 (A <-> B) a cyklus délky 3 (A -> C -> D -> A)
+      const adj = new Map([
+        ["test.a", ["test.b", "test.c"]],
+        ["test.b", ["test.a"]],
+        ["test.c", ["test.d"]],
+        ["test.d", ["test.a"]]
+      ]);
+      const cycles1 = detectCycles(["test.a", "test.b", "test.c", "test.d"], adj);
+      const cycles2 = detectCycles(["test.d", "test.c", "test.b", "test.a"], adj);
+      assert.deepEqual(cycles1, [["test.a", "test.b", "test.a"]]);
+      assert.deepEqual(cycles2, [["test.a", "test.b", "test.a"]]);
+    });
+
+    // 5. lexical tie-break: canonical witness začíná nejmenším moduleKey a volí lexikograficky menšího souseda
+    it("R01-5. lexical tie-break: canonical witness začíná nejmenším moduleKey", () => {
+      // Cyklus Z -> M -> A -> Z (canonical start musí být A)
+      const adj1 = new Map([
+        ["test.z", ["test.m"]],
+        ["test.m", ["test.a"]],
+        ["test.a", ["test.z"]]
+      ]);
+      const cycles1 = detectCycles(["test.z", "test.m", "test.a"], adj1);
+      assert.deepEqual(cycles1, [["test.a", "test.z", "test.m", "test.a"]]);
+
+      // Stejná délka cyklů: A -> B -> A a A -> C -> A (B má přednost před C)
+      const adj2 = new Map([
+        ["test.a", ["test.c", "test.b"]],
+        ["test.b", ["test.a"]],
+        ["test.c", ["test.a"]]
+      ]);
+      const cycles2 = detectCycles(["test.a", "test.b", "test.c"], adj2);
+      assert.deepEqual(cycles2, [["test.a", "test.b", "test.a"]]);
+    });
+
+    // 6. dense strongly-connected graph: 60 nodes s velkým množstvím hran
+    it("R01-6. dense strongly-connected graph: polynomiální detekce vrátí deterministický witness", () => {
+      const nodeCount = 60;
+      const nodes = Array.from({ length: nodeCount }, (_, i) => "node_" + String(i).padStart(2, "0"));
+      const adj = new Map<string, string[]>();
+
+      for (let i = 0; i < nodeCount; i++) {
+        const u = nodes[i]!;
+        const out: string[] = [];
+        // Každý uzel má hrany na dalších 15 uzlů cyklicky
+        for (let step = 1; step <= 15; step++) {
+          out.push(nodes[(i + step) % nodeCount]!);
+        }
+        adj.set(u, out);
+      }
+
+      const cycles = detectCycles(nodes, adj);
+      assert.equal(cycles.length, 1);
+      const witness = cycles[0]!;
+      assert.ok(witness.length > 1);
+      assert.equal(witness[0], witness[witness.length - 1]);
+      assert.equal(witness[0], "node_00");
+
+      // Ověření platnosti hran v nalezeném cyklu
+      for (let k = 0; k < witness.length - 1; k++) {
+        const from = witness[k]!;
+        const to = witness[k + 1]!;
+        const neighbors = adj.get(from) ?? [];
+        assert.ok(neighbors.includes(to), `Hrana ${from} -> ${to} musí existovat`);
+      }
+    });
+
+    // 7. opakuj dense graph s obráceným pořadím vstupu: witness musí být stejný
+    it("R01-7. dense graph s obráceným pořadím vstupních uzlů vrátí identický witness", () => {
+      const nodeCount = 60;
+      const nodes = Array.from({ length: nodeCount }, (_, i) => "node_" + String(i).padStart(2, "0"));
+      const adj = new Map<string, string[]>();
+
+      for (let i = 0; i < nodeCount; i++) {
+        const u = nodes[i]!;
+        const out: string[] = [];
+        for (let step = 1; step <= 15; step++) {
+          out.push(nodes[(i + step) % nodeCount]!);
+        }
+        adj.set(u, out);
+      }
+
+      const cyclesForward = detectCycles(nodes, adj);
+      const reversedNodes = [...nodes].reverse();
+      const cyclesReversed = detectCycles(reversedNodes, adj);
+
+      assert.deepEqual(cyclesReversed, cyclesForward);
+    });
+
+    // 8. dva oddělené dense cyclic SCC: dva deterministické witnesses
+    it("R01-8. dva oddělené dense cyclic SCC vrátí dva deterministické witnesses", () => {
+      const count = 30;
+      const nodesA = Array.from({ length: count }, (_, i) => "cluster_a_" + String(i).padStart(2, "0"));
+      const nodesB = Array.from({ length: count }, (_, i) => "cluster_b_" + String(i).padStart(2, "0"));
+      const adj = new Map<string, string[]>();
+
+      for (let i = 0; i < count; i++) {
+        const uA = nodesA[i]!;
+        const outA: string[] = [];
+        for (let step = 1; step <= 8; step++) {
+          outA.push(nodesA[(i + step) % count]!);
+        }
+        adj.set(uA, outA);
+
+        const uB = nodesB[i]!;
+        const outB: string[] = [];
+        for (let step = 1; step <= 8; step++) {
+          outB.push(nodesB[(i + step) % count]!);
+        }
+        adj.set(uB, outB);
+      }
+
+      const allNodes = [...nodesB, ...nodesA]; // Úmyslně B před A
+      const cycles = detectCycles(allNodes, adj);
+      assert.equal(cycles.length, 2);
+      // Lexikografické seřazení cyklů: cluster_a_00 před cluster_b_00
+      assert.equal(cycles[0]![0], "cluster_a_00");
+      assert.equal(cycles[1]![0], "cluster_b_00");
+    });
+
+    // 9. acyclic large graph: žádný cycle
+    it("R01-9. acyclic large graph (100 uzlů DAG) vrátí prázdné pole cyklů", () => {
+      const nodeCount = 100;
+      const nodes = Array.from({ length: nodeCount }, (_, i) => "node_" + String(i).padStart(3, "0"));
+      const adj = new Map<string, string[]>();
+
+      for (let i = 0; i < nodeCount; i++) {
+        const u = nodes[i]!;
+        const out: string[] = [];
+        // Hrany vedou pouze dopředu (i -> i+1, i+2) => acyklický DAG
+        if (i + 1 < nodeCount) out.push(nodes[i + 1]!);
+        if (i + 2 < nodeCount) out.push(nodes[i + 2]!);
+        adj.set(u, out);
+      }
+
+      const cycles = detectCycles(nodes, adj);
+      assert.deepEqual(cycles, []);
+
+      // Ověření topologického řazení nad velkým DAG
+      const order = topologicalSort(nodes, adj);
+      assert.ok(order !== null);
+      assert.equal(order.length, nodeCount);
+    });
+  });
+
 });

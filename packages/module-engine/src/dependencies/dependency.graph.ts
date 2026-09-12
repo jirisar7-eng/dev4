@@ -1,6 +1,6 @@
 /**
  * @tmpr/module-engine - Dependency Graph Algorithms & Cycle Detection
- * Implementace detekce cyklů (Tarjan SCC + shortest witness BFS) a deterministického topologického řazení (Kahn).
+ * Implementace detekce cyklů (Tarjan SCC + polynomiální shortest witness BFS) a deterministického topologického řazení (Kahn).
  */
 
 /**
@@ -37,6 +37,8 @@ interface TarjanState {
 
 /**
  * Spustí Tarjanův SCC algoritmus na orientovaném grafu.
+ * Poznámka k implementaci: Algoritmus je rekurzivní (strongConnect) se složitostí O(V + E)
+ * před deterministickým řazením výstupů.
  */
 function computeSCCs(
   vertices: readonly string[],
@@ -92,7 +94,18 @@ function computeSCCs(
 }
 
 /**
- * Pro danou silně souvislou komponentu (SCC) nalezne nejkratší witness cyklus pomocí BFS od minNode.
+ * Pro danou silně souvislou komponentu (SCC) nalezne nejkratší witness cyklus.
+ *
+ * Algoritmus: Polynomiální shortest-witness BFS v O(V_scc + E_scc):
+ * 1. Zvolí deterministický canonical start (lexikograficky nejmenší uzel SCC).
+ * 2. Ošetří případný self-loop (start -> start => [start, start]).
+ * 3. Sestaví reverzní adjacency list pouze pro uzly dané SCC.
+ * 4. Spustí jeden BFS z canonical start na reverzním grafu, čímž získá nejkratší vzdálenost
+ *    každého uzlu SCC zpět do canonical startu v původním grafu. Fronta obsahuje pouze
+ *    jednotlivé uzly (O(V) paměť), necelé cesty (žádná exponenciální enumerace simple paths).
+ * 5. Z odchozích sousedů canonical startu vybere souseda s minimální vzdáleností zpět do startu
+ *    (s lexikografickým tie-breakem).
+ * 6. Deterministicky zrekonstruuje witness po hranách s klesající vzdáleností (d - 1).
  */
 function findCycleWitness(
   scc: readonly string[],
@@ -100,38 +113,93 @@ function findCycleWitness(
 ): string[] {
   const sccSet = new Set(scc);
   const sortedNodes = [...scc].sort((a, b) => a.localeCompare(b));
-  const minNode = sortedNodes[0]!;
+  const start = sortedNodes[0]!;
 
-  const queue: string[][] = [];
-  const neighbors = (adjacency.get(minNode) ?? [])
-    .filter((n) => sccSet.has(n))
-    .sort((a, b) => a.localeCompare(b));
-
-  for (const next of neighbors) {
-    if (next === minNode) {
-      return [minNode, minNode];
-    }
-    queue.push([minNode, next]);
+  // 1. Ošetření self-loop na canonical startu
+  const startOutgoing = (adjacency.get(start) ?? []).filter((n) => sccSet.has(n));
+  if (startOutgoing.includes(start)) {
+    return [start, start];
   }
 
-  while (queue.length > 0) {
-    const path = queue.shift()!;
-    const last = path[path.length - 1]!;
-    const nextNeighbors = (adjacency.get(last) ?? [])
+  // 2. Sestavení reverzní adjacency pouze pro uzly uvnitř této SCC
+  const reverseAdj = new Map<string, string[]>();
+  for (const node of sortedNodes) {
+    reverseAdj.set(node, []);
+  }
+  for (const u of sortedNodes) {
+    const out = adjacency.get(u) ?? [];
+    for (const v of out) {
+      if (sccSet.has(v)) {
+        reverseAdj.get(v)!.push(u);
+      }
+    }
+  }
+  for (const node of sortedNodes) {
+    reverseAdj.get(node)!.sort((a, b) => a.localeCompare(b));
+  }
+
+  // 3. Jeden BFS z canonical startu na reverzním grafu
+  const distToStart = new Map<string, number>();
+  distToStart.set(start, 0);
+  const bfsQueue: string[] = [start];
+
+  while (bfsQueue.length > 0) {
+    const curr = bfsQueue.shift()!;
+    const d = distToStart.get(curr)!;
+    const preds = reverseAdj.get(curr) ?? [];
+    for (const pred of preds) {
+      if (!distToStart.has(pred)) {
+        distToStart.set(pred, d + 1);
+        bfsQueue.push(pred);
+      }
+    }
+  }
+
+  // 4. Výběr nejlepšího odchozího souseda canonical startu
+  let bestNeighbor: string | null = null;
+  let minDistance = Infinity;
+  const sortedStartNeighbors = [...startOutgoing].sort((a, b) => a.localeCompare(b));
+
+  for (const neighbor of sortedStartNeighbors) {
+    const dist = distToStart.get(neighbor);
+    if (dist !== undefined) {
+      if (dist < minDistance) {
+        minDistance = dist;
+        bestNeighbor = neighbor;
+      }
+    }
+  }
+
+  if (!bestNeighbor) {
+    return canonicalizeCycle([...sortedNodes, sortedNodes[0]!]);
+  }
+
+  // 5. Deterministická rekonstrukce witness cyklu
+  const witness: string[] = [start, bestNeighbor];
+  let curr = bestNeighbor;
+
+  while (curr !== start) {
+    const currentDist = distToStart.get(curr)!;
+    if (currentDist === 0) {
+      break;
+    }
+    const targetDist = currentDist - 1;
+    const outgoing = (adjacency.get(curr) ?? [])
       .filter((n) => sccSet.has(n))
+      .filter((n) => distToStart.get(n) === targetDist)
       .sort((a, b) => a.localeCompare(b));
 
-    for (const next of nextNeighbors) {
-      if (next === minNode) {
-        return canonicalizeCycle([...path, minNode]);
-      }
-      if (!path.includes(next)) {
-        queue.push([...path, next]);
-      }
+    if (outgoing.length === 0) {
+      witness.push(start);
+      break;
     }
+
+    const nextNode = outgoing[0]!;
+    witness.push(nextNode);
+    curr = nextNode;
   }
 
-  return canonicalizeCycle([...sortedNodes, sortedNodes[0]!]);
+  return canonicalizeCycle(witness);
 }
 
 /**
@@ -226,5 +294,6 @@ export function topologicalSort(
   if (order.length !== vertices.length) {
     return null;
   }
+
   return order;
 }
