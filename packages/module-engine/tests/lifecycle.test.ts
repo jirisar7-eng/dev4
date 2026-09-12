@@ -28,6 +28,7 @@ import type {
   IModuleManifest,
 } from "../src/contract/types.js";
 import { ModuleRegistry } from "../src/registry/registry.js";
+import { registryMutators } from "../src/registry/registry.internal.js";
 import { DependencyResolver } from "../src/dependencies/dependency-resolver.js";
 import { ModuleGate } from "../src/gates/module-gate.js";
 import { ModuleLifecycleEngine } from "../src/lifecycle/lifecycle.engine.js";
@@ -1003,15 +1004,12 @@ describe("Reference Module Lifecycle Gate (NEWDEV-16 / F1-009)", () => {
 
     it("2. Modul ve stavu 'failed' nelze přímo zapnout (enable) - vyžaduje cleanup", async () => {
       // Připravíme registraci modulu
-      const manifest = {} as any;
-      
+            
       // Nasimulujeme selhání přes registry (použijeme interní asert na immutable registry casted as mutable)
-      const internalRegistry = registry; 
+      const internalRegistry = registryMutators.get(registry)!; 
       internalRegistry.register({
-        manifest,
-        moduleKey: "reference.failed-module",
-        instance: {},
-        onInstall: async () => {},
+        manifest: { moduleKey: "reference.failed-module", version: "1.0.0", name: "Test", description: "Test", routes: [], dependencies: { required: [], optional: [] }, compatibility: { synthesisCore: "*" } } as any,
+                onInstall: async () => {},
         onEnable: async () => {},
       });
       internalRegistry.recordState("reference.failed-module", "failed");
@@ -1029,14 +1027,11 @@ describe("Reference Module Lifecycle Gate (NEWDEV-16 / F1-009)", () => {
 
     it("3. Modul ve stavu 'failed' nelze přímo instalovat - vyžaduje cleanup", async () => {
       // Připravíme registraci modulu
-      const manifest = {} as any;
-      
-      const internalRegistry = registry; 
+            
+      const internalRegistry = registryMutators.get(registry)!; 
       internalRegistry.register({
-        manifest,
-        moduleKey: "reference.failed-module",
-        instance: {},
-        onInstall: async () => {},
+        manifest: { moduleKey: "reference.failed-module", version: "1.0.0", name: "Test", description: "Test", routes: [], dependencies: { required: [], optional: [] }, compatibility: { synthesisCore: "*" } } as any,
+                onInstall: async () => {},
       });
       internalRegistry.recordState("reference.failed-module", "failed");
       
@@ -1053,14 +1048,11 @@ describe("Reference Module Lifecycle Gate (NEWDEV-16 / F1-009)", () => {
 
     it("4. Bezpečná recovery z 'failed' funguje přes uninstall", async () => {
       let isUninstalled = false;
-      const manifest = {} as any;
-      
-      const internalRegistry = registry; 
+            
+      const internalRegistry = registryMutators.get(registry)!; 
       internalRegistry.register({
-        manifest,
-        moduleKey: "reference.failed-module",
-        instance: {},
-        onUninstall: async () => { isUninstalled = true; },
+        manifest: { moduleKey: "reference.failed-module", version: "1.0.0", name: "Test", description: "Test", routes: [], dependencies: { required: [], optional: [] }, compatibility: { synthesisCore: "*" } } as any,
+                onUninstall: async () => { isUninstalled = true; },
       });
       internalRegistry.recordState("reference.failed-module", "failed");
       

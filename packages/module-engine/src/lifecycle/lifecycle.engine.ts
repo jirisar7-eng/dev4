@@ -17,9 +17,9 @@ import type {
 } from "../contract/types.js";
 import type {
   IModuleRegistry,
-  IMutableModuleRegistry,
   IModuleRegistryRecord,
 } from "../registry/registry.types.js";
+import { registryMutators, type IMutableModuleRegistry } from "../registry/registry.internal.js";
 import type { IDependencyResolver } from "../dependencies/dependency.types.js";
 import { DependencyResolver } from "../dependencies/dependency-resolver.js";
 import type { IModuleGate } from "../gates/gate.types.js";
@@ -75,13 +75,17 @@ export class ModuleLifecycleEngine implements IModuleLifecycleEngine {
   private readonly options: ModuleLifecycleEngineOptions;
 
   constructor(
-    registry: IMutableModuleRegistry,
+    registry: IModuleRegistry,
     resolver?: IDependencyResolver,
     gate?: IModuleGate,
     options?: ModuleLifecycleEngineOptions
   ) {
-    this.mutableRegistry = registry;
     this.registry = registry;
+    const mutator = registryMutators.get(registry);
+    if (!mutator) {
+      throw new Error("Provided registry does not support mutations. Make sure to use the official ModuleRegistry instance.");
+    }
+    this.mutableRegistry = mutator;
     this.resolver = resolver ?? new DependencyResolver(registry);
     this.gate = gate ?? new ModuleGate(this.registry, this.resolver);
     this.options = { ...options };

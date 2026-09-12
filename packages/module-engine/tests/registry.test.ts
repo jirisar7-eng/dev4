@@ -5,6 +5,7 @@
 
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { registryMutators } from "../src/registry/registry.internal.js";
 import {
   ModuleRegistry,
   ModuleRegistryError,
@@ -292,16 +293,16 @@ describe("TMPR-NEWDEV-20260911-F1-003: Module Registry", () => {
     registry.register(mod);
     assert.equal(registry.getRecord("test.state-update")?.state, "uninstalled");
 
-    registry.recordState("test.state-update", "installed");
+    registryMutators.get(registry)!.recordState("test.state-update", "installed");
     assert.equal(registry.getRecord("test.state-update")?.state, "installed");
 
-    registry.recordState("test.state-update", "enabled");
+    registryMutators.get(registry)!.recordState("test.state-update", "enabled");
     assert.equal(registry.getRecord("test.state-update")?.state, "enabled");
 
-    registry.recordState("test.state-update", "disabled");
+    registryMutators.get(registry)!.recordState("test.state-update", "disabled");
     assert.equal(registry.getRecord("test.state-update")?.state, "disabled");
 
-    registry.recordState("test.state-update", "failed");
+    registryMutators.get(registry)!.recordState("test.state-update", "failed");
     assert.equal(registry.getRecord("test.state-update")?.state, "failed");
   });
 
@@ -310,7 +311,7 @@ describe("TMPR-NEWDEV-20260911-F1-003: Module Registry", () => {
     const registry = new ModuleRegistry({ synthesisCoreVersion: "1.0.0" });
 
     assert.throws(
-      () => registry.recordState("test.non-existent", "enabled"),
+      () => registryMutators.get(registry)!.recordState("test.non-existent", "enabled"),
       (err: unknown) => {
         assert.ok(err instanceof ModuleRegistryError);
         assert.equal(err.code, "MODULE_NOT_REGISTERED");
@@ -482,7 +483,7 @@ describe("TMPR-NEWDEV-20260911-F1-003-R01: Read-only State Hardening", () => {
     registry.register(mod);
 
     assert.doesNotThrow(() => {
-      registry.recordState("test.hardening-record-state", "installed");
+      registryMutators.get(registry)!.recordState("test.hardening-record-state", "installed");
     });
   });
 
@@ -494,16 +495,16 @@ describe("TMPR-NEWDEV-20260911-F1-003-R01: Read-only State Hardening", () => {
 
     assert.equal(registry.getRecord("test.hardening-lifecycle")?.state, "uninstalled");
 
-    registry.recordState("test.hardening-lifecycle", "installed");
+    registryMutators.get(registry)!.recordState("test.hardening-lifecycle", "installed");
     assert.equal(registry.getRecord("test.hardening-lifecycle")?.state, "installed");
 
-    registry.recordState("test.hardening-lifecycle", "enabled");
+    registryMutators.get(registry)!.recordState("test.hardening-lifecycle", "enabled");
     assert.equal(registry.getRecord("test.hardening-lifecycle")?.state, "enabled");
 
-    registry.recordState("test.hardening-lifecycle", "disabled");
+    registryMutators.get(registry)!.recordState("test.hardening-lifecycle", "disabled");
     assert.equal(registry.getRecord("test.hardening-lifecycle")?.state, "disabled");
 
-    registry.recordState("test.hardening-lifecycle", "failed");
+    registryMutators.get(registry)!.recordState("test.hardening-lifecycle", "failed");
     assert.equal(registry.getRecord("test.hardening-lifecycle")?.state, "failed");
   });
 
@@ -785,10 +786,10 @@ describe("TMPR-NEWDEV-20260911-F1-003-R02: Deep Manifest Immutability Hardening"
 
     assert.equal(registry.getRecord("test.r01-record-state")?.state, "uninstalled");
 
-    registry.recordState("test.r01-record-state", "installed");
+    registryMutators.get(registry)!.recordState("test.r01-record-state", "installed");
     assert.equal(registry.getRecord("test.r01-record-state")?.state, "installed");
 
-    registry.recordState("test.r01-record-state", "enabled");
+    registryMutators.get(registry)!.recordState("test.r01-record-state", "enabled");
     assert.equal(registry.getRecord("test.r01-record-state")?.state, "enabled");
 
     // Manifest zůstává po změně stavu stále hluboce zmrazen

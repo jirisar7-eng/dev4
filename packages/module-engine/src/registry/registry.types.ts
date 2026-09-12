@@ -117,12 +117,4 @@ export interface IModuleRegistry {
   getRouteOwner(surface: string, path: string): string | undefined;
 }
 
-/**
- * Interní rozhraní pro mutaci registru. Nesmí být použito z klientského kódu.
- */
-export interface IMutableModuleRegistry extends IModuleRegistry {
-  recordState(moduleKey: string, state: ModuleLifecycleState): void;
-  unregister(moduleKey: string): void;
-  unregisterRoutes(moduleKey: string): void;
-  registerRoutes(moduleKey: string): void;
-}
+

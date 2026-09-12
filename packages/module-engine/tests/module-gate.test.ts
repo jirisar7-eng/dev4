@@ -5,6 +5,7 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
+import { registryMutators } from "../src/registry/registry.internal.js";
 import {
   ModuleRegistry,
   DependencyResolver,
@@ -119,7 +120,7 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
     const gate = new ModuleGate(registry, resolver);
 
     registry.register(createTestModule({ moduleKey: "test.installed" }));
-    registry.recordState("test.installed", "installed");
+    registryMutators.get(registry)!.recordState("test.installed", "installed");
 
     const decision = await gate.evaluateModuleAccess("test.installed");
     assert.equal(decision.allowed, false);
@@ -134,7 +135,7 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
     const gate = new ModuleGate(registry, resolver);
 
     registry.register(createTestModule({ moduleKey: "test.disabled" }));
-    registry.recordState("test.disabled", "disabled");
+    registryMutators.get(registry)!.recordState("test.disabled", "disabled");
 
     const decision = await gate.evaluateModuleAccess("test.disabled");
     assert.equal(decision.allowed, false);
@@ -149,7 +150,7 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
     const gate = new ModuleGate(registry, resolver);
 
     registry.register(createTestModule({ moduleKey: "test.failed" }));
-    registry.recordState("test.failed", "failed");
+    registryMutators.get(registry)!.recordState("test.failed", "failed");
 
     const decision = await gate.evaluateModuleAccess("test.failed");
     assert.equal(decision.allowed, false);
@@ -164,7 +165,7 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
     const gate = new ModuleGate(registry, resolver);
 
     registry.register(createTestModule({ moduleKey: "test.enabled-pub" }));
-    registry.recordState("test.enabled-pub", "enabled");
+    registryMutators.get(registry)!.recordState("test.enabled-pub", "enabled");
 
     const decision = await gate.evaluateModuleAccess("test.enabled-pub", "public");
     assert.equal(decision.allowed, true);
@@ -191,7 +192,7 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
         },
       })
     );
-    registry.recordState("test.no-public", "enabled");
+    registryMutators.get(registry)!.recordState("test.no-public", "enabled");
 
     const decision = await gate.evaluateModuleAccess("test.no-public", "public");
     assert.equal(decision.allowed, false);
@@ -222,8 +223,8 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
         },
       })
     );
-    registry.recordState("test.admin-on", "enabled");
-    registry.recordState("test.admin-off", "enabled");
+    registryMutators.get(registry)!.recordState("test.admin-on", "enabled");
+    registryMutators.get(registry)!.recordState("test.admin-off", "enabled");
 
     assert.equal((await gate.evaluateModuleAccess("test.admin-on", "admin")).allowed, true);
     assert.equal((await gate.evaluateModuleAccess("test.admin-off", "admin")).allowed, false);
@@ -254,8 +255,8 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
         },
       })
     );
-    registry.recordState("test.api-on", "enabled");
-    registry.recordState("test.api-off", "enabled");
+    registryMutators.get(registry)!.recordState("test.api-on", "enabled");
+    registryMutators.get(registry)!.recordState("test.api-off", "enabled");
 
     assert.equal((await gate.evaluateModuleAccess("test.api-on", "api")).allowed, true);
     assert.equal((await gate.evaluateModuleAccess("test.api-off", "api")).allowed, false);
@@ -284,7 +285,7 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
         ],
       })
     );
-    registry.recordState("test.route-mod", "enabled");
+    registryMutators.get(registry)!.recordState("test.route-mod", "enabled");
 
     const decision = await gate.evaluateRouteAccess("public", "/my/route");
     assert.equal(decision.allowed, true);
@@ -316,7 +317,7 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
         ],
       })
     );
-    registry.recordState("test.route-off", "disabled");
+    registryMutators.get(registry)!.recordState("test.route-off", "disabled");
 
     const decision = await gate.evaluateRouteAccess("public", "/my/closed/route");
     assert.equal(decision.allowed, false);
@@ -354,7 +355,7 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
         },
       })
     );
-    registry.recordState("test.dependent", "enabled");
+    registryMutators.get(registry)!.recordState("test.dependent", "enabled");
 
     const decision = await gate.evaluateModuleAccess("test.dependent");
     assert.equal(decision.allowed, false);
@@ -385,8 +386,8 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
         },
       })
     );
-    registry.recordState("test.dep-provider", "enabled");
-    registry.recordState("test.dep-consumer", "enabled");
+    registryMutators.get(registry)!.recordState("test.dep-provider", "enabled");
+    registryMutators.get(registry)!.recordState("test.dep-consumer", "enabled");
 
     const decision = await gate.evaluateModuleAccess("test.dep-consumer");
     assert.equal(decision.allowed, false);
@@ -420,8 +421,8 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
         },
       })
     );
-    registry.recordState("test.cycle-a", "enabled");
-    registry.recordState("test.cycle-b", "enabled");
+    registryMutators.get(registry)!.recordState("test.cycle-a", "enabled");
+    registryMutators.get(registry)!.recordState("test.cycle-b", "enabled");
 
     const decision = await gate.evaluateModuleAccess("test.cycle-a");
     assert.equal(decision.allowed, false);
@@ -445,7 +446,7 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
         },
       })
     );
-    registry.recordState("test.opt-consumer", "enabled");
+    registryMutators.get(registry)!.recordState("test.opt-consumer", "enabled");
 
     const decision = await gate.evaluateModuleAccess("test.opt-consumer");
     assert.equal(decision.allowed, true);
@@ -474,8 +475,8 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
         },
       })
     );
-    registry.recordState("test.opt-target", "enabled");
-    registry.recordState("test.opt-caller", "enabled");
+    registryMutators.get(registry)!.recordState("test.opt-target", "enabled");
+    registryMutators.get(registry)!.recordState("test.opt-caller", "enabled");
 
     const decision = await gate.evaluateModuleAccess("test.opt-caller");
     assert.equal(decision.allowed, true);
@@ -504,8 +505,8 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
         },
       })
     );
-    registry.recordState("test.dep-base", "disabled");
-    registry.recordState("test.dep-user", "enabled");
+    registryMutators.get(registry)!.recordState("test.dep-base", "disabled");
+    registryMutators.get(registry)!.recordState("test.dep-user", "enabled");
 
     const decision = await gate.evaluateModuleAccess("test.dep-user");
     assert.equal(decision.allowed, false);
@@ -533,8 +534,8 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
         },
       })
     );
-    registry.recordState("test.dep-failed-base", "failed");
-    registry.recordState("test.dep-failed-user", "enabled");
+    registryMutators.get(registry)!.recordState("test.dep-failed-base", "failed");
+    registryMutators.get(registry)!.recordState("test.dep-failed-user", "enabled");
 
     const decision = await gate.evaluateModuleAccess("test.dep-failed-user");
     assert.equal(decision.allowed, false);
@@ -561,8 +562,8 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
         },
       })
     );
-    registry.recordState("test.dep-ok-base", "enabled");
-    registry.recordState("test.dep-ok-user", "enabled");
+    registryMutators.get(registry)!.recordState("test.dep-ok-base", "enabled");
+    registryMutators.get(registry)!.recordState("test.dep-ok-user", "enabled");
 
     const decision = await gate.evaluateModuleAccess("test.dep-ok-user");
     assert.equal(decision.allowed, true);
@@ -598,9 +599,9 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
       })
     );
 
-    registry.recordState("test.trans-c", "disabled"); // ROOT dependency disabled
-    registry.recordState("test.trans-b", "enabled");
-    registry.recordState("test.trans-a", "enabled");
+    registryMutators.get(registry)!.recordState("test.trans-c", "disabled"); // ROOT dependency disabled
+    registryMutators.get(registry)!.recordState("test.trans-b", "enabled");
+    registryMutators.get(registry)!.recordState("test.trans-a", "enabled");
 
     const decision = await gate.evaluateModuleAccess("test.trans-a");
     assert.equal(decision.allowed, false);
@@ -623,7 +624,7 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
         ],
       })
     );
-    registry.recordState("test.meta-mod", "enabled");
+    registryMutators.get(registry)!.recordState("test.meta-mod", "enabled");
 
     const d1 = await gate.evaluateRouteAccess("public", "/pub/login");
     assert.equal(d1.allowed, true);
@@ -653,7 +654,7 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
         ],
       })
     );
-    registry.recordState("test.perm-mod", "enabled");
+    registryMutators.get(registry)!.recordState("test.perm-mod", "enabled");
 
     const dec = await gate.evaluateRouteAccess("admin", "/admin/audit");
     assert.equal(dec.allowed, true);
@@ -668,12 +669,12 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
     const gate = new ModuleGate(registry, resolver);
 
     registry.register(createTestModule({ moduleKey: "test.fresh-state" }));
-    registry.recordState("test.fresh-state", "enabled");
+    registryMutators.get(registry)!.recordState("test.fresh-state", "enabled");
 
     assert.equal(await gate.isModuleEnabled("test.fresh-state"), true);
 
     // Změna v registru bez nové Gate instance
-    registry.recordState("test.fresh-state", "disabled");
+    registryMutators.get(registry)!.recordState("test.fresh-state", "disabled");
 
     assert.equal(await gate.isModuleEnabled("test.fresh-state"), false);
     const dec = await gate.evaluateModuleAccess("test.fresh-state");
@@ -689,7 +690,7 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
     const gate = new ModuleGate(registry, resolver);
 
     registry.register(createTestModule({ moduleKey: "test.immutable-state" }));
-    registry.recordState("test.immutable-state", "installed");
+    registryMutators.get(registry)!.recordState("test.immutable-state", "installed");
 
     await gate.evaluateModuleAccess("test.immutable-state");
     await gate.evaluateRouteAccess("public", "/test/immutable/state/overview");
@@ -704,7 +705,7 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
     const gate = new ModuleGate(registry, resolver);
 
     registry.register(createTestModule({ moduleKey: "test.immutable-manifest" }));
-    registry.recordState("test.immutable-manifest", "enabled");
+    registryMutators.get(registry)!.recordState("test.immutable-manifest", "enabled");
 
     await gate.evaluateModuleAccess("test.immutable-manifest");
     const record = registry.getRecord("test.immutable-manifest");
@@ -730,7 +731,7 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
     };
 
     registry.register(module);
-    registry.recordState("test.hooks-check", "enabled");
+    registryMutators.get(registry)!.recordState("test.hooks-check", "enabled");
 
     await gate.evaluateModuleAccess("test.hooks-check");
     await gate.evaluateRouteAccess("public", "/test/hooks/check/overview");
@@ -758,7 +759,7 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
         },
       })
     );
-    registry.recordState("test.multi-surface", "enabled");
+    registryMutators.get(registry)!.recordState("test.multi-surface", "enabled");
 
     assert.equal((await gate.evaluateModuleAccess("test.multi-surface", "public")).allowed, true);
     assert.equal((await gate.evaluateModuleAccess("test.multi-surface", "account")).allowed, true);
@@ -792,8 +793,8 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
         routes: [{ surface: "admin", path: "/dashboard", requiresAuth: false }],
       })
     );
-    registry.recordState("test.account-mod", "enabled");
-    registry.recordState("test.admin-mod", "enabled");
+    registryMutators.get(registry)!.recordState("test.account-mod", "enabled");
+    registryMutators.get(registry)!.recordState("test.admin-mod", "enabled");
 
     const accDecision = await gate.evaluateRouteAccess("account", "/dashboard");
     assert.equal(accDecision.allowed, true);
@@ -812,7 +813,7 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
     const gate = new ModuleGate(registry, resolver);
 
     registry.register(createTestModule({ moduleKey: "test.det-mod" }));
-    registry.recordState("test.det-mod", "enabled");
+    registryMutators.get(registry)!.recordState("test.det-mod", "enabled");
 
     const first = await gate.evaluateModuleAccess("test.det-mod", "public");
     for (let i = 0; i < 10; i++) {
@@ -828,12 +829,12 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
     const gate = new ModuleGate(registry, resolver);
 
     registry.register(createTestModule({ moduleKey: "test.convenience" }));
-    registry.recordState("test.convenience", "enabled");
+    registryMutators.get(registry)!.recordState("test.convenience", "enabled");
 
     assert.equal(await gate.isModuleEnabled("test.convenience"), true);
     assert.equal(await gate.assertModuleAccess("test.convenience", "public"), true);
 
-    registry.recordState("test.convenience", "disabled");
+    registryMutators.get(registry)!.recordState("test.convenience", "disabled");
     assert.equal(await gate.isModuleEnabled("test.convenience"), false);
 
     await assert.rejects(
@@ -856,7 +857,7 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
     const gate = new ModuleGate(registry, resolver);
 
     registry.register(createTestModule({ moduleKey: "test.sync-parity" }));
-    registry.recordState("test.sync-parity", "enabled");
+    registryMutators.get(registry)!.recordState("test.sync-parity", "enabled");
 
     const asyncMod = await gate.evaluateModuleAccess("test.sync-parity", "public");
     const syncMod = gate.evaluateModuleAccessSync("test.sync-parity", "public");
@@ -897,7 +898,7 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
         routes: [{ surface: "public", path: "/route-on-closed-surf", requiresAuth: false }],
       })
     );
-    registry.recordState("test.surf-route", "enabled");
+    registryMutators.get(registry)!.recordState("test.surf-route", "enabled");
 
     const decision = await gate.evaluateRouteAccess("public", "/route-on-closed-surf");
     assert.equal(decision.allowed, false);
@@ -928,9 +929,9 @@ test("TMPR-NEWDEV-20260912-F1-005: Route & API Module Gates", async (t) => {
       })
     );
 
-    registry.recordState("test.mult-dep1", "enabled");
-    registry.recordState("test.mult-dep2", "disabled");
-    registry.recordState("test.mult-main", "enabled");
+    registryMutators.get(registry)!.recordState("test.mult-dep1", "enabled");
+    registryMutators.get(registry)!.recordState("test.mult-dep2", "disabled");
+    registryMutators.get(registry)!.recordState("test.mult-main", "enabled");
 
     const decision = await gate.evaluateModuleAccess("test.mult-main");
     assert.equal(decision.allowed, false);
