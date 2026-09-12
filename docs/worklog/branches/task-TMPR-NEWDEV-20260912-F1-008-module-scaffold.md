@@ -8,7 +8,7 @@
 **BASE BRANCH:** main  
 **BASE COMMIT:** 481140a28f8f985217ba842ce95d1bf2bac5b1e2  
 **WORK BRANCH:** task/TMPR-NEWDEV-20260912-F1-008-module-scaffold  
-**STATUS:** LOCAL_PASS  
+**STATUS:** COMPLETE  
 
 ## IN SCOPE:
 - Deterministický generátor doménového modulu v `@tmpr/module-engine` (`packages/module-engine/src/scaffold/`)
@@ -51,6 +51,7 @@
 - `packages/module-engine/package.json` — přidán bin `tmpr-scaffold`, export `./scaffold` a aktualizován glob pro spouštění testů
 - `packages/module-engine/tests/scaffold.test.ts` — komplexní testovací sada
 - `package.json` — přidán skript `scaffold:module`
+- `docs/audit/TMPR-NEWDEV-20260912-F1-008.md` — finální auditní zpráva
 
 ## VÝSLEDKY VERIFIKACE:
 - `pnpm turbo run build`: PASS (2/2 balíčky)
@@ -60,3 +61,7 @@
 - `pnpm test:boundaries`: PASS (0 porušení, 38 souborů, 120 importů)
 - `pnpm scaffold:module --moduleKey family.alimony` + `test:boundaries`: PASS (0 porušení, 51 souborů, 141 importů)
 - `pnpm --filter family-alimony test`: PASS (4 testy, 100% PASS)
+- **CI GitHub Actions (Run ID 34687544819, Job ID 103537067850):**
+  - Turbo Build, Typecheck & Test: SUCCESS
+  - Architecture Boundary Gate: SUCCESS (0 violations)
+  - Celkový stav CI: SUCCESS
