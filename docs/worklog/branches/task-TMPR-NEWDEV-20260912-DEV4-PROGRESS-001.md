@@ -19,15 +19,15 @@ b92e6d004283b2c81725f34bce37ed4c210240a2
 task/TMPR-NEWDEV-20260912-DEV4-PROGRESS-001
 
 ## Status
-BOOTSTRAPPING
+IN PROGRESS
 
 ## Completed
 - Branch created
-
-## Remaining
 - Data contract
 - Generated snapshot
 - Snapshot validator
+
+## Remaining
 - Content JSON
 - UI implementation
 - Verification
@@ -38,7 +38,10 @@ BOOTSTRAPPING
 - Hardcoding logic instead of deriving from snapshot
 
 ## Changed Files
-TBD
+- apps/public/src/lib/dev-progress.ts
+- apps/public/src/generated/dev-progress.generated.json
+- apps/public/scripts/verify-dev-progress.mjs
+- apps/public/package.json
 
 ## Tests
 TBD
@@ -53,7 +56,7 @@ TBD
 TBD
 
 ## EXACT NEXT STEP
-Data contract and generated snapshot implementation.
+Content JSON and UI implementation.
 
 ## Last Updated
-2026-09-12T16:17:00Z
+2026-09-12T16:19:00Z
