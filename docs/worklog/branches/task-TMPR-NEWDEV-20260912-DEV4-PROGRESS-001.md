@@ -60,3 +60,28 @@ Content JSON and UI implementation.
 
 ## Last Updated
 2026-09-12T16:19:00Z
+
+## WORKLOG CHECKPOINT — VPS recovery / preview compatibility
+
+- Environment: DEV4 VPS workspace
+- VPS path: `/var/www/tatovacesta_dev4`
+- Container: `synthesis_dev4_workspace`
+- Verified base HEAD: `5c8e9f33a12a92a06afb37d87dd8d9c39f43788f`
+- Node: `24.21.0`
+- pnpm: `12.4.1`
+- Added root `dev` entrypoint for `@synthesis/public`
+- Added root `start` entrypoint for `@synthesis/public`
+- `packageManager` remains `pnpm@12.4.1`
+- `pnpm-workspace.yaml` preserved
+- No `package-lock.json`
+- No `bun.lock`
+- `git diff --check`: PASS
+- AI Studio preview compatibility change not yet pushed
+
+## EXACT NEXT STEP
+
+Commit `package.json` and this worklog checkpoint, then push to the existing task branch.
+
+## Last Updated
+
+2026-09-12
