@@ -8,7 +8,7 @@
 **BASE BRANCH:** main
 **BASE COMMIT:** ddb79f1092e06c7e3f898fe717c1bf2182bcfb46
 **WORK BRANCH:** task/TMPR-NEWDEV-20260912-F1-007-boundary-gate
-**STATUS:** IMPLEMENTED_LOCAL_PASS
+**STATUS:** COMPLETE
 
 **COMPLETED:**
 - Verifikace repo safety a baseline commitu `ddb79f1`
@@ -24,47 +24,38 @@
   - `ERR-ARCH-007`: Klientské aplikace nesmí přímo importovat Prisma/databázi
   - `ERR-ARCH-008`: Zákaz nepovolených balíčků (Redis, BullMQ)
 - Zabezpečení proti obcházení pravidel relativními importy, re-exporty (`export * from ...`), dynamickými importy (`await import(...)`) i `require(...)`
-- Vytvoření kompletní testovací sady (20 testů) pokrývající všech 10 povinných scénářů a fixtures
+- Vytvoření kompletní testovací sady (20 testů) pokrývající všech 10 povinných scénářů a fixtures v `tests/fixtures/`
 - Konfigurace kořenového `package.json` s příkazem `test:boundaries`, `tsconfig.json` s projektovou referencí a integrace do CI workflow `.github/workflows/ci.yml`
 - Lokální ověření:
   - `pnpm turbo run build typecheck test lint --force` -> 8/8 úloh SUCCESS, 160/160 testů PASS (140 module-engine, 20 boundary-gate)
   - `pnpm test:boundaries` -> SUCCESS (32 souborů zkontrolováno, 92 importů, 0 porušení)
+- Commit implementace na pracovní větvi (`c3d8c10`) a push na origin
+- Merge do `main` (fast-forward `ddb79f1..c3d8c10`) a push do `origin/main`
+- Vzdálená GitHub Actions Node 24 CI verifikace: Run ID `34685764447`, Job ID `103532365784` -> SUCCESS (20s)
+- Zpracování auditního reportu: `docs/audit/TMPR-NEWDEV-20260912-F1-007.md`
 
 **REMAINING:**
-- Commit implementace na pracovní větvi a push na origin
-- Ověření remote branch HEAD a merge pracovní větve do main
-- Push do origin/main a sledování GitHub Actions Node 24 CI
-- Vytvoření auditního reportu `docs/audit/TMPR-NEWDEV-20260912-F1-007.md`
-- Synchronizace pracovní větve na finální main HEAD
+- none
 
 **BLOCKERS:** none
 
 **RISKS:**
-- Všechna identifikovaná rizika (křehké regexy, obcházení relativními cestami, frozen-lockfile) byla vyřešena a otestována.
+- none (všechna architektonická pravidla ověřena v CI i v testovací sadě)
 
 **CHANGED FILES:**
 - .github/workflows/ci.yml
 - package.json
 - pnpm-lock.yaml
 - tsconfig.json
-- packages/boundary-gate/package.json
-- packages/boundary-gate/tsconfig.json
-- packages/boundary-gate/tsconfig.test.json
-- packages/boundary-gate/src/ast-parser.ts
-- packages/boundary-gate/src/classifier.ts
-- packages/boundary-gate/src/cli.ts
-- packages/boundary-gate/src/index.ts
-- packages/boundary-gate/src/rules.ts
-- packages/boundary-gate/src/scanner.ts
-- packages/boundary-gate/src/types.ts
-- packages/boundary-gate/tests/boundary-gate.test.ts
-- packages/boundary-gate/tests/fixtures/**/*
+- packages/boundary-gate/*
 - docs/worklog/branches/task-TMPR-NEWDEV-20260912-F1-007-boundary-gate.md
+- docs/audit/TMPR-NEWDEV-20260912-F1-007.md
 
 **TEST STATUS:** 160/160 PASS, BOUNDARIES_GATE_PASS
-**COMMITS:** pending
-**PUSH STATUS:** PENDING_COMMIT
-**CI STATUS:** PENDING
-**LAST VERIFIED HEAD:** ddb79f1092e06c7e3f898fe717c1bf2182bcfb46
-**EXACT NEXT STEP:** Git add and commit implementačního balíčku a konfigurace na pracovní větvi
-**LAST UPDATED:** 2026-09-12T02:24:00-07:00
+**COMMITS:**
+- `c3d8c10`: feat(boundary-gate): implement architecture boundary and forbidden import gate (TMPR-NEWDEV-20260912-F1-007)
+**PUSH STATUS:** PUSHED
+**CI STATUS:** SUCCESS (GitHub Actions Node 24 Run 34685764447, Job 103532365784)
+**LAST VERIFIED HEAD:** c3d8c101dc374d2dbf922d71ac45134540a57e0c
+**EXACT NEXT STEP:** Task F1-007 hotov. Předání ChatGPT pro další úkol dle backlogu.
+**LAST UPDATED:** 2026-09-12T02:26:00-07:00
