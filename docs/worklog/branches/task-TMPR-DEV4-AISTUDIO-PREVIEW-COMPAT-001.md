@@ -105,3 +105,27 @@ No product/module topology change. This task affects development/runtime entrypo
 
 ## PUSH CHECKPOINT
 Pending initial branch push.
+
+## FINAL VERIFICATION — PASS
+
+- Root command: `pnpm dev`
+- Public app: Next.js 15.5.25
+- Runtime: `Ready in 1726ms`
+- VPS endpoint: `http://127.0.0.1:3004/`
+- HTTP result: `200 OK`
+- Runtime user: UID/GID 1000
+- Functional change: root `dev` and `start` scripts in `package.json`
+- Verdict: PASS
+
+## PUSH CHECKPOINT
+
+Implementation commit:
+`f84c431eab45806f01bbb6678de0a4c0fc8e4e4e`
+
+## EXACT NEXT STEP
+
+Merge this verified task branch into `main`.
+
+## Last Updated
+
+2026-09-12
