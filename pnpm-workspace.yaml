@@ -2,3 +2,6 @@ packages:
   - "packages/*"
   - "modules/*"
   - "apps/*"
+allowBuilds:
+  '@tailwindcss/oxide': true
+  'unrs-resolver': true
